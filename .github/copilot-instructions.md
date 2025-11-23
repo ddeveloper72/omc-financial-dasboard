@@ -1,4 +1,4 @@
-# YTS Budget Analysis Project - AI Coding Agent Instructions
+git commit -m "Initial commit: Project setup"# YTS Budget Analysis Project - AI Coding Agent Instructions
 
 ## Project Overview
 This is a Flask-based web application for data mining and visualizing Yewtree Square Owner's Management Company (OMC) service charges from AGM documents. The app extracts budget information from various document formats (PDF, etc.) and presents trend analysis via an interactive dashboard.
