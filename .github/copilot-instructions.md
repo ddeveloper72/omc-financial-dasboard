@@ -18,6 +18,7 @@ This is a Flask-based web application for data mining and visualizing Yewtree Sq
 - **Custom Scripts**: Separate JavaScript file
 - **Environment**: `.env` file for secrets
 - **Virtual Environment**: `.venv` (already configured)
+- **UI/UX Design**: Mobile-first responsive design
 
 ## Critical Development Rules
 
@@ -37,6 +38,18 @@ This is a Flask-based web application for data mining and visualizing Yewtree Sq
 - Keep CDN versions up to date
 - Example Bootstrap CDN: `https://cdn.jsdelivr.net/npm/bootstrap@5.3.x/dist/css/bootstrap.min.css`
 - Example Font Awesome CDN: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.x.x/css/all.min.css`
+
+### UI/UX Design Principles
+- **Mobile-first approach**: Design for mobile screens first, then scale up to tablets and desktops
+- **Responsive breakpoints**: Use Bootstrap's responsive grid system (xs, sm, md, lg, xl, xxl)
+- **Touch-friendly targets**: Ensure buttons and interactive elements are at least 44x44px for mobile
+- **Readable typography**: Use minimum 16px font size for body text on mobile
+- **Optimized navigation**: Collapsible hamburger menu for mobile devices
+- **Progressive disclosure**: Show essential information first, hide secondary details in expandable sections
+- **Fast loading**: Minimize page weight, lazy load images and heavy content
+- **Thumb-friendly zones**: Place primary actions within easy thumb reach on mobile devices
+- **Viewport meta tag**: Always include `<meta name="viewport" content="width=device-width, initial-scale=1.0">`
+- **Test on real devices**: Verify UI/UX on actual mobile devices, not just browser dev tools
 
 ## Document Processing Strategy
 
@@ -100,8 +113,15 @@ This is a Flask-based web application for data mining and visualizing Yewtree Sq
 ## Testing Strategy
 - Test document parsing with sample PDFs from various years
 - Verify data extraction accuracy
-- Test dashboard responsiveness across devices
+- Test dashboard responsiveness across devices (mobile, tablet, desktop)
 - Validate trend calculations
+- **Mobile testing priorities**:
+  - Test on various screen sizes (320px, 375px, 414px, 768px, 1024px, 1920px)
+  - Verify touch interactions (tap, swipe, pinch-to-zoom where applicable)
+  - Check navbar collapse behavior on mobile
+  - Ensure forms are usable on mobile keyboards
+  - Test chart interactions on touch devices
+  - Verify page load performance on mobile networks
 
 ## Performance Considerations
 - Store parsed document data in SQLite to avoid re-processing
