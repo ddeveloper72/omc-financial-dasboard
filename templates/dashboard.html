@@ -10,9 +10,9 @@
 </div>
 
 <!-- Summary Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
+<div class="row mb-4 g-3">
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card bg-primary text-white h-100">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="fas fa-file-alt"></i> Documents
@@ -22,8 +22,8 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card bg-success text-white h-100">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="fas fa-dollar-sign"></i> Charges
@@ -33,8 +33,8 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card bg-info text-white h-100">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="fas fa-calendar"></i> Years
@@ -44,8 +44,8 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-dark">
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card bg-warning text-dark h-100">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="fas fa-tags"></i> Categories
@@ -59,31 +59,33 @@
 
 <!-- Filters -->
 <div class="row mb-4">
-    <div class="col-md-12">
+    <div class="col-12">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title"><i class="fas fa-filter"></i> Filters</h5>
-                <div class="row">
-                    <div class="col-md-4">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
                         <label for="yearFilter" class="form-label">Year</label>
-                        <select id="yearFilter" class="form-select" onchange="applyFilters()">
+                        <select id="yearFilter" class="form-select" onchange="applyFilters()"
+                            aria-label="Filter by year">
                             <option value="">All Years</option>
                             {% for year in stats.years_available %}
                             <option value="{{ year[0] }}">{{ year[0] }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <label for="categoryFilter" class="form-label">Category</label>
-                        <select id="categoryFilter" class="form-select" onchange="applyFilters()">
+                        <select id="categoryFilter" class="form-select" onchange="applyFilters()"
+                            aria-label="Filter by category">
                             <option value="">All Categories</option>
                             {% for category in stats.categories %}
                             <option value="{{ category.id }}">{{ category.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">&nbsp;</label>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label d-none d-md-block">&nbsp;</label>
                         <button class="btn btn-secondary w-100" onclick="resetFilters()">
                             <i class="fas fa-redo"></i> Reset Filters
                         </button>
@@ -135,108 +137,108 @@
 
 {% block extra_css %}
 <style>
-#trendsChart {
-    max-height: 400px;
-}
+    #trendsChart {
+        max-height: 400px;
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-let trendsChart;
+    let trendsChart;
 
-// Load data on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadTrends();
-    loadCharges();
-});
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        loadTrends();
+        loadCharges();
+    });
 
-function loadTrends() {
-    fetch('/api/trends')
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('trendsChart').getContext('2d');
-            
-            if (trendsChart) {
-                trendsChart.destroy();
-            }
-            
-            trendsChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(d => d.year),
-                    datasets: [{
-                        label: 'Total Service Charges',
-                        data: data.map(d => d.total_amount),
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'EUR ' + value.toLocaleString();
+    function loadTrends() {
+        fetch('/api/trends')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('trendsChart').getContext('2d');
+
+                if (trendsChart) {
+                    trendsChart.destroy();
+                }
+
+                trendsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.year),
+                        datasets: [{
+                            label: 'Total Service Charges',
+                            data: data.map(d => d.total_amount),
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return 'EUR ' + value.toLocaleString();
+                                    }
                                 }
                             }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return 'EUR ' + context.parsed.y.toLocaleString();
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return 'EUR ' + context.parsed.y.toLocaleString();
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            });
-        })
-        .catch(error => console.error('Error loading trends:', error));
-}
+                });
+            })
+            .catch(error => console.error('Error loading trends:', error));
+    }
 
-function loadCharges() {
-    const year = document.getElementById('yearFilter').value;
-    const category = document.getElementById('categoryFilter').value;
-    
-    let url = '/api/charges?';
-    if (year) url += `year=${year}&`;
-    if (category) url += `category_id=${category}&`;
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            const tbody = document.querySelector('#chargesTable tbody');
-            tbody.innerHTML = '';
-            
-            data.forEach(charge => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
+    function loadCharges() {
+        const year = document.getElementById('yearFilter').value;
+        const category = document.getElementById('categoryFilter').value;
+
+        let url = '/api/charges?';
+        if (year) url += `year=${year}&`;
+        if (category) url += `category_id=${category}&`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#chargesTable tbody');
+                tbody.innerHTML = '';
+
+                data.forEach(charge => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
                     <td>${charge.year}</td>
                     <td>${charge.charge_name}</td>
                     <td>${charge.category || 'Uncategorized'}</td>
                     <td>${charge.currency} ${charge.amount.toFixed(2)}</td>
                 `;
-            });
-        })
-        .catch(error => console.error('Error loading charges:', error));
-}
+                });
+            })
+            .catch(error => console.error('Error loading charges:', error));
+    }
 
-function applyFilters() {
-    loadCharges();
-}
+    function applyFilters() {
+        loadCharges();
+    }
 
-function resetFilters() {
-    document.getElementById('yearFilter').value = '';
-    document.getElementById('categoryFilter').value = '';
-    loadCharges();
-}
+    function resetFilters() {
+        document.getElementById('yearFilter').value = '';
+        document.getElementById('categoryFilter').value = '';
+        loadCharges();
+    }
 </script>
 {% endblock %}

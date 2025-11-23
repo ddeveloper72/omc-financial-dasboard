@@ -8,11 +8,11 @@ async function apiCall(url, method = 'GET', body = null) {
             'Content-Type': 'application/json'
         }
     };
-    
+
     if (body) {
         options.body = JSON.stringify(body);
     }
-    
+
     try {
         const response = await fetch(url, options);
         const data = await response.json();
@@ -35,7 +35,7 @@ function showToast(message, type = 'info') {
             </div>
         </div>
     `;
-    
+
     // Create toast container if it doesn't exist
     let toastContainer = document.getElementById('toastContainer');
     if (!toastContainer) {
@@ -44,13 +44,13 @@ function showToast(message, type = 'info') {
         toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
         document.body.appendChild(toastContainer);
     }
-    
+
     toastContainer.insertAdjacentHTML('beforeend', toastHTML);
-    
+
     const toastElement = toastContainer.lastElementChild;
     const toast = new bootstrap.Toast(toastElement);
     toast.show();
-    
+
     // Remove toast from DOM after it's hidden
     toastElement.addEventListener('hidden.bs.toast', () => {
         toastElement.remove();
@@ -95,9 +95,9 @@ function debounce(func, wait) {
 }
 
 // Initialize tooltips
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function(tooltipTriggerEl) {
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
@@ -107,7 +107,7 @@ function exportToCSV(data, filename) {
     const csvContent = convertToCSV(data);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    
+
     if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
@@ -121,13 +121,13 @@ function exportToCSV(data, filename) {
 
 function convertToCSV(data) {
     if (!data || data.length === 0) return '';
-    
+
     const headers = Object.keys(data[0]);
     const csvRows = [];
-    
+
     // Add header row
     csvRows.push(headers.join(','));
-    
+
     // Add data rows
     for (const row of data) {
         const values = headers.map(header => {
@@ -136,7 +136,7 @@ function convertToCSV(data) {
         });
         csvRows.push(values.join(','));
     }
-    
+
     return csvRows.join('\n');
 }
 
