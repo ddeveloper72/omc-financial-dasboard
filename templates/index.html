@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Home - YTS Budget Analysis{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Yewtree Square Budget Analysis</h1>
+            <p class="lead">Track and analyze OMC service charges over time</p>
+            <hr class="my-4">
+            <p>This application extracts budget information from AGM documents and provides trend analysis through an interactive dashboard.</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('dashboard') }}" role="button">
+                <i class="fas fa-chart-line"></i> View Dashboard
+            </a>
+            <button class="btn btn-success btn-lg" onclick="scanDocuments()">
+                <i class="fas fa-search"></i> Scan Documents
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-file-pdf fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Document Processing</h5>
+                <p class="card-text">Automatically extract data from AGM PDFs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Trend Analysis</h5>
+                <p class="card-text">Visualize service charges over multiple years</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-search-dollar fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Cost Tracking</h5>
+                <p class="card-text">Identify new, terminated, and trending charges</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="scanResults" class="mt-4"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function scanDocuments() {
+    const resultsDiv = document.getElementById('scanResults');
+    resultsDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Scanning documents...</div>';
+    
+    fetch('/api/scan-documents', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-check-circle"></i> Scan Complete</h5>
+                    <p>Found ${data.documents_found} documents</p>
+                </div>
+            `;
+        } else {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Error: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        resultsDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Error: ${error.message}
+            </div>
+        `;
+    });
+}
+</script>
+{% endblock %}
