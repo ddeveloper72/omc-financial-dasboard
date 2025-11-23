@@ -56,12 +56,20 @@ class DocumentScanner:
         """Extract file metadata"""
         stat_info = filepath.stat()
         
+        # Extract year from path
+        extracted_year = self.extract_year_from_path(str(filepath))
+        
+        # Classify document type from filename
+        doc_type = self._classify_document_type(filepath.name)
+        
         return {
             'filename': filepath.name,
             'filepath': str(filepath),
             'file_size': stat_info.st_size,
             'modified_date': datetime.fromtimestamp(stat_info.st_mtime),
-            'extension': filepath.suffix.lower()
+            'extension': filepath.suffix.lower(),
+            'year': extracted_year,
+            'document_type': doc_type
         }
     
     def extract_year_from_path(self, filepath: str) -> Optional[int]:
@@ -86,6 +94,36 @@ class DocumentScanner:
                 return int(year_match.group(1))
         
         return None
+    
+    def _classify_document_type(self, filename: str) -> str:
+        """
+        Classify document type based on filename
+        
+        Returns:
+            Document type: 'Audited Accounts', 'Proposed Budget', 'AGM Minutes', 'Other'
+        """
+        filename_lower = filename.lower()
+        
+        # Check for audited accounts / financial statements
+        if any(term in filename_lower for term in [
+            'audited account', 'financial statement', 'accounts 20',
+            'audit', 'statement'
+        ]):
+            return 'Audited Accounts'
+        
+        # Check for proposed/draft budgets
+        if any(term in filename_lower for term in [
+            'budget', 'draft budget', 'proposed budget', 'apportionment'
+        ]):
+            return 'Proposed Budget'
+        
+        # Check for AGM/EGM minutes or notices
+        if any(term in filename_lower for term in [
+            'agm minutes', 'egm minutes', 'meeting minutes', 'agm notice'
+        ]):
+            return 'AGM Minutes'
+        
+        return 'Other'
     
     def filter_by_year(self, documents: List[Dict], year: int) -> List[Dict]:
         """Filter documents by year"""

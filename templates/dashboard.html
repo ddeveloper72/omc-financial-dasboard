@@ -74,7 +74,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <label for="categoryFilter" class="form-label">Category</label>
                         <select id="categoryFilter" class="form-select" onchange="applyFilters()"
                             aria-label="Filter by category">
@@ -84,7 +84,17 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
+                        <label for="documentTypeFilter" class="form-label">Document Type</label>
+                        <select id="documentTypeFilter" class="form-select" onchange="applyFilters()"
+                            aria-label="Filter by document type">
+                            <option value="">All Types</option>
+                            {% for doc_type in stats.document_types %}
+                            <option value="{{ doc_type[0] }}">{{ doc_type[0] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2">
                         <label class="form-label d-none d-md-block">&nbsp;</label>
                         <button class="btn btn-secondary w-100" onclick="resetFilters()">
                             <i class="fas fa-redo"></i> Reset Filters
@@ -121,6 +131,7 @@
                                 <th>Year</th>
                                 <th>Charge Name</th>
                                 <th>Category</th>
+                                <th>Document Type</th>
                                 <th>Amount</th>
                             </tr>
                         </thead>
@@ -138,7 +149,19 @@
 {% block extra_css %}
 <style>
     #trendsChart {
-        max-height: 400px;
+        height: 400px;
+    }
+
+    @media (min-width: 992px) {
+        #trendsChart {
+            height: 500px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        #trendsChart {
+            height: 250px;
+        }
     }
 </style>
 {% endblock %}
@@ -155,7 +178,10 @@
     });
 
     function loadTrends() {
-        fetch('/api/trends')
+        const documentType = document.getElementById('documentTypeFilter').value;
+        let url = '/api/trends?charge_type=expense';
+
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 const ctx = document.getElementById('trendsChart').getContext('2d');
@@ -164,17 +190,36 @@
                     trendsChart.destroy();
                 }
 
+                const datasets = [];
+
+                // Audited Accounts (Actuals) - solid line
+                datasets.push({
+                    label: 'Audited Accounts (Actuals)',
+                    data: data.actuals,
+                    borderColor: 'rgb(25, 135, 84)',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.1,
+                    spanGaps: true
+                });
+
+                // Proposed Budgets - dashed line
+                datasets.push({
+                    label: 'Proposed Budgets',
+                    data: data.budgets,
+                    borderColor: 'rgb(13, 110, 253)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [10, 5],
+                    tension: 0.1,
+                    spanGaps: true
+                });
+
                 trendsChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: data.map(d => d.year),
-                        datasets: [{
-                            label: 'Total Service Charges',
-                            data: data.map(d => d.total_amount),
-                            borderColor: 'rgb(75, 192, 192)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            tension: 0.1
-                        }]
+                        labels: data.years,
+                        datasets: datasets
                     },
                     options: {
                         responsive: true,
@@ -207,10 +252,12 @@
     function loadCharges() {
         const year = document.getElementById('yearFilter').value;
         const category = document.getElementById('categoryFilter').value;
+        const documentType = document.getElementById('documentTypeFilter').value;
 
         let url = '/api/charges?';
         if (year) url += `year=${year}&`;
         if (category) url += `category_id=${category}&`;
+        if (documentType) url += `document_type=${encodeURIComponent(documentType)}&`;
 
         fetch(url)
             .then(response => response.json())
@@ -224,6 +271,7 @@
                     <td>${charge.year}</td>
                     <td>${charge.charge_name}</td>
                     <td>${charge.category || 'Uncategorized'}</td>
+                    <td><span class="badge bg-secondary">${charge.document_type || 'N/A'}</span></td>
                     <td>${charge.currency} ${charge.amount.toFixed(2)}</td>
                 `;
                 });
@@ -232,12 +280,15 @@
     }
 
     function applyFilters() {
+        loadTrends();
         loadCharges();
     }
 
     function resetFilters() {
         document.getElementById('yearFilter').value = '';
         document.getElementById('categoryFilter').value = '';
+        document.getElementById('documentTypeFilter').value = '';
+        loadTrends();
         loadCharges();
     }
 </script>

@@ -54,6 +54,7 @@ class ServiceCharge(db.Model):
     charge_name = db.Column(db.String(200), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(3), default='EUR')
+    charge_type = db.Column(db.String(20), default='expense')  # expense, income, balance_sheet
     
     # Metadata
     raw_text = db.Column(db.Text)  # Original text extracted from document
@@ -63,6 +64,11 @@ class ServiceCharge(db.Model):
     notes = db.Column(db.Text)
     
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Prevent duplicate charges from same document
+    __table_args__ = (
+        db.UniqueConstraint('document_id', 'charge_name', 'year', name='unique_charge_per_document'),
+    )
     
     def __repr__(self):
         return f'<ServiceCharge {self.charge_name} ({self.year}): {self.currency}{self.amount}>'
