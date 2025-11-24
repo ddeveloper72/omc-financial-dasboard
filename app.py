@@ -135,7 +135,9 @@ def get_charges():
     """Get all service charges with optional filtering"""
     year = request.args.get('year', type=int)
     category_id = request.args.get('category_id', type=int)
-    document_type = request.args.get('document_type')
+    
+    # Support multiple document types
+    document_types = request.args.getlist('document_type')
     
     query = ServiceCharge.query.join(Document)
     
@@ -143,8 +145,8 @@ def get_charges():
         query = query.filter(ServiceCharge.year == year)
     if category_id:
         query = query.filter(ServiceCharge.category_id == category_id)
-    if document_type:
-        query = query.filter(Document.document_type == document_type)
+    if document_types:
+        query = query.filter(Document.document_type.in_(document_types))
     
     charges = query.all()
     

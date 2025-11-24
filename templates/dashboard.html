@@ -86,13 +86,25 @@
                     </div>
                     <div class="col-12 col-md-3">
                         <label for="documentTypeFilter" class="form-label">Document Type</label>
-                        <select id="documentTypeFilter" class="form-select" onchange="applyFilters()"
-                            aria-label="Filter by document type">
-                            <option value="">All Types</option>
-                            {% for doc_type in stats.document_types %}
-                            <option value="{{ doc_type[0] }}">{{ doc_type[0] }}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="dropup" id="documentTypeDropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button"
+                                id="documentTypeFilterBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                aria-expanded="false">
+                                <span id="documentTypeLabel">All Types</span>
+                            </button>
+                            <ul class="dropdown-menu w-100" aria-labelledby="documentTypeFilterBtn"
+                                id="documentTypeMenu">
+                                {% for doc_type in stats.document_types %}
+                                <li>
+                                    <label class="dropdown-item">
+                                        <input type="checkbox" class="form-check-input me-2" value="{{ doc_type[0] }}"
+                                            onchange="updateDocumentTypeFilter()">
+                                        {{ doc_type[0] }}
+                                    </label>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                     <div class="col-12 col-md-2">
                         <label class="form-label d-none d-md-block">&nbsp;</label>
@@ -126,14 +138,8 @@
                 <h5 class="card-title"><i class="fas fa-table"></i> Service Charges</h5>
                 <div class="table-responsive">
                     <table class="table table-striped table-hover" id="chargesTable">
-                        <thead>
-                            <tr>
-                                <th>Year</th>
-                                <th>Charge Name</th>
-                                <th>Category</th>
-                                <th>Document Type</th>
-                                <th>Amount</th>
-                            </tr>
+                        <thead id="chargesTableHead">
+                            <!-- Populated by JavaScript -->
                         </thead>
                         <tbody>
                             <!-- Populated by JavaScript -->
@@ -163,6 +169,49 @@
             height: 250px;
         }
     }
+
+    #documentTypeMenu {
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1050;
+    }
+
+    .dropdown-menu {
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1050;
+    }
+
+    #documentTypeDropdown {
+        position: relative;
+        z-index: 1000;
+    }
+
+    .dropdown-item {
+        cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .text-success-custom {
+        color: #198754 !important;
+        font-weight: 600;
+    }
+
+    .text-danger-custom {
+        color: #dc3545 !important;
+        font-weight: 600;
+    }
+
+    .variance-positive {
+        background-color: #d1e7dd !important;
+    }
+
+    .variance-negative {
+        background-color: #f8d7da !important;
+    }
 </style>
 {% endblock %}
 
@@ -173,12 +222,12 @@
 
     // Load data on page load
     document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM loaded, initializing dashboard');
         loadTrends();
         loadCharges();
     });
 
     function loadTrends() {
-        const documentType = document.getElementById('documentTypeFilter').value;
         let url = '/api/trends?charge_type=expense';
 
         fetch(url)
@@ -252,31 +301,157 @@
     function loadCharges() {
         const year = document.getElementById('yearFilter').value;
         const category = document.getElementById('categoryFilter').value;
-        const documentType = document.getElementById('documentTypeFilter').value;
+        const checkboxes = document.querySelectorAll('#documentTypeMenu input[type="checkbox"]:checked');
+        const selectedDocTypes = Array.from(checkboxes).map(cb => cb.value);
+
+        console.log('Loading charges with filters:', {
+            year: year,
+            category: category,
+            documentTypes: selectedDocTypes
+        });
 
         let url = '/api/charges?';
         if (year) url += `year=${year}&`;
         if (category) url += `category_id=${category}&`;
-        if (documentType) url += `document_type=${encodeURIComponent(documentType)}&`;
+
+        // Add multiple document types
+        selectedDocTypes.forEach(dt => {
+            url += `document_type=${encodeURIComponent(dt)}&`;
+        });
+
+        console.log('API URL:', url);
 
         fetch(url)
             .then(response => response.json())
             .then(data => {
+                console.log('Received data:', data.length, 'charges');
+                console.log('Document types in data:', [...new Set(data.map(c => c.document_type))]);
+                
+                const thead = document.querySelector('#chargesTableHead');
                 const tbody = document.querySelector('#chargesTable tbody');
-                tbody.innerHTML = '';
 
-                data.forEach(charge => {
-                    const row = tbody.insertRow();
-                    row.innerHTML = `
-                    <td>${charge.year}</td>
-                    <td>${charge.charge_name}</td>
-                    <td>${charge.category || 'Uncategorized'}</td>
-                    <td><span class="badge bg-secondary">${charge.document_type || 'N/A'}</span></td>
-                    <td>${charge.currency} ${charge.amount.toFixed(2)}</td>
-                `;
-                });
+                // If multiple document types selected, create comparison view
+                if (selectedDocTypes.length > 1) {
+                    console.log('Creating comparison table');
+                    createComparisonTable(data, selectedDocTypes, thead, tbody);
+                } else {
+                    console.log('Creating standard table');
+                    createStandardTable(data, thead, tbody);
+                }
             })
             .catch(error => console.error('Error loading charges:', error));
+    }
+
+    function createStandardTable(data, thead, tbody) {
+        // Standard table view
+        thead.innerHTML = `
+            <tr>
+                <th>Year</th>
+                <th>Charge Name</th>
+                <th>Category</th>
+                <th>Document Type</th>
+                <th>Amount</th>
+            </tr>
+        `;
+
+        tbody.innerHTML = '';
+        data.forEach(charge => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${charge.year}</td>
+                <td>${charge.charge_name}</td>
+                <td>${charge.category || 'Uncategorized'}</td>
+                <td><span class="badge bg-secondary">${charge.document_type || 'N/A'}</span></td>
+                <td>${charge.currency} ${charge.amount.toFixed(2)}</td>
+            `;
+        });
+    }
+
+    function createComparisonTable(data, selectedDocTypes, thead, tbody) {
+        // Comparison view: charge names in rows, document types in columns
+        console.log('createComparisonTable called with:', {
+            dataCount: data.length,
+            selectedDocTypes: selectedDocTypes,
+            sampleData: data.slice(0, 2)
+        });
+
+        // Check if we're comparing budget vs actuals
+        const hasProposed = selectedDocTypes.includes('Proposed Budget');
+        const hasAudited = selectedDocTypes.includes('Audited Accounts');
+        const showVariance = hasProposed && hasAudited && selectedDocTypes.length === 2;
+
+        console.log('Comparison settings:', { hasProposed, hasAudited, showVariance });
+
+        // Build header
+        let headerHTML = '<tr><th>Year</th><th>Charge Name</th><th>Category</th>';
+        selectedDocTypes.forEach(docType => {
+            headerHTML += `<th class="text-end">${docType}</th>`;
+        });
+        if (showVariance) {
+            headerHTML += '<th class="text-end">Variance</th>';
+        }
+        headerHTML += '</tr>';
+        thead.innerHTML = headerHTML;
+
+        // Group charges by year and charge name
+        const chargeMap = {};
+        data.forEach(charge => {
+            const key = `${charge.year}|${charge.charge_name}`;
+            if (!chargeMap[key]) {
+                chargeMap[key] = {
+                    year: charge.year,
+                    charge_name: charge.charge_name,
+                    category: charge.category,
+                    amounts: {}
+                };
+            }
+            chargeMap[key].amounts[charge.document_type] = charge.amount;
+        });
+
+        console.log('Charge map created:', Object.keys(chargeMap).length, 'unique charges');
+        console.log('Sample charge map entry:', Object.values(chargeMap)[0]);
+
+        // Build table rows
+        tbody.innerHTML = '';
+        Object.values(chargeMap).forEach(charge => {
+            const row = tbody.insertRow();
+            let rowHTML = `
+                <td>${charge.year}</td>
+                <td>${charge.charge_name}</td>
+                <td>${charge.category || 'Uncategorized'}</td>
+            `;
+
+            // Store amounts for variance calculation
+            let proposedAmount = null;
+            let auditedAmount = null;
+
+            // Add amount columns for each document type
+            selectedDocTypes.forEach(docType => {
+                const amount = charge.amounts[docType];
+                if (amount !== undefined) {
+                    rowHTML += `<td class="text-end">EUR ${amount.toFixed(2)}</td>`;
+                    if (docType === 'Proposed Budget') proposedAmount = amount;
+                    if (docType === 'Audited Accounts') auditedAmount = amount;
+                } else {
+                    rowHTML += `<td class="text-center text-muted">-</td>`;
+                }
+            });
+
+            // Add variance column if comparing budget vs actuals
+            if (showVariance) {
+                if (proposedAmount !== null && auditedAmount !== null) {
+                    const variance = auditedAmount - proposedAmount;
+                    const variancePercent = proposedAmount !== 0 ? (variance / proposedAmount * 100) : 0;
+                    const varianceClass = variance > 0 ? 'variance-negative text-danger-custom' : variance < 0 ? 'variance-positive text-success-custom' : '';
+                    const varianceSign = variance > 0 ? '+' : '';
+                    rowHTML += `<td class="text-end ${varianceClass}">${varianceSign}EUR ${variance.toFixed(2)} (${varianceSign}${variancePercent.toFixed(1)}%)</td>`;
+                } else {
+                    rowHTML += `<td class="text-center text-muted">-</td>`;
+                }
+            }
+
+            row.innerHTML = rowHTML;
+        });
     }
 
     function applyFilters() {
@@ -284,10 +459,40 @@
         loadCharges();
     }
 
+    function updateDocumentTypeFilter() {
+        const checkboxes = document.querySelectorAll('#documentTypeMenu input[type="checkbox"]');
+        const checked = Array.from(checkboxes).filter(cb => cb.checked);
+        const label = document.getElementById('documentTypeLabel');
+
+        if (!label) {
+            console.error('Document type label not found');
+            return;
+        }
+
+        if (checked.length === 0) {
+            label.textContent = 'All Types';
+        } else if (checked.length === 1) {
+            label.textContent = String.fromCharCode(10003) + ' ' + checked[0].value;
+        } else {
+            label.textContent = String.fromCharCode(10003) + ' ' + checked.length + ' types selected';
+        }
+
+        applyFilters();
+    }
+
     function resetFilters() {
-        document.getElementById('yearFilter').value = '';
-        document.getElementById('categoryFilter').value = '';
-        document.getElementById('documentTypeFilter').value = '';
+        const yearFilter = document.getElementById('yearFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const documentTypeLabel = document.getElementById('documentTypeLabel');
+        
+        if (yearFilter) yearFilter.value = '';
+        if (categoryFilter) categoryFilter.value = '';
+        
+        const checkboxes = document.querySelectorAll('#documentTypeMenu input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = false);
+        
+        if (documentTypeLabel) documentTypeLabel.textContent = 'All Types';
+        
         loadTrends();
         loadCharges();
     }

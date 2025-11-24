@@ -60,6 +60,13 @@ class BudgetExtractor:
             # Table headers and column references
             r'\bTotal\s+20\d{2}\b',  # "Total 2024", "Total 2023"
             r'^20\d{2}$',             # Just a year on its own line
+            # Column headers and document labels
+            r'^\s*Unaudited\s*$',     # "Unaudited" column header
+            r'^\s*Audited\s*$',       # "Audited" column header
+            r'^\s*Draft\s*$',         # "Draft" label
+            # Section headers without amounts (category names)
+            r'^\s*Lift\s+Costs\s*$',  # "Lift Costs" section header
+            r'^\s*Insurance\s*$',     # "Insurance" section header (when standalone)
         ]
     
     def _preprocess_ocr_text(self, text: str) -> str:
