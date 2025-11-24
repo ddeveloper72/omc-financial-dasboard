@@ -326,7 +326,7 @@
             .then(data => {
                 console.log('Received data:', data.length, 'charges');
                 console.log('Document types in data:', [...new Set(data.map(c => c.document_type))]);
-                
+
                 const thead = document.querySelector('#chargesTableHead');
                 const tbody = document.querySelector('#chargesTable tbody');
 
@@ -484,15 +484,15 @@
         const yearFilter = document.getElementById('yearFilter');
         const categoryFilter = document.getElementById('categoryFilter');
         const documentTypeLabel = document.getElementById('documentTypeLabel');
-        
+
         if (yearFilter) yearFilter.value = '';
         if (categoryFilter) categoryFilter.value = '';
-        
+
         const checkboxes = document.querySelectorAll('#documentTypeMenu input[type="checkbox"]');
         checkboxes.forEach(cb => cb.checked = false);
-        
+
         if (documentTypeLabel) documentTypeLabel.textContent = 'All Types';
-        
+
         loadTrends();
         loadCharges();
     }
