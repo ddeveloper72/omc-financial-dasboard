@@ -26,7 +26,7 @@
         <div class="card bg-success text-white h-100">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="fas fa-dollar-sign"></i> Charges
+                    <i class="fas fa-euro-sign"></i> Charges
                 </h5>
                 <h2>{{ stats.total_charges }}</h2>
                 <p class="card-text">Total service charges</p>
@@ -66,17 +66,30 @@
                 <div class="row g-3">
                     <div class="col-12 col-md-4">
                         <label for="yearFilter" class="form-label">Year</label>
-                        <select id="yearFilter" class="form-select" onchange="applyFilters()"
-                            aria-label="Filter by year">
-                            <option value="">All Years</option>
-                            {% for year in stats.years_available %}
-                            <option value="{{ year[0] }}">{{ year[0] }}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="dropdown" id="yearDropdown">
+                            <button
+                                class="btn btn-outline-secondary dropdown-toggle w-100 text-start form-select-height"
+                                type="button" id="yearFilterBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                aria-expanded="false">
+                                <span id="yearLabel" class="d-inline-block text-truncate" style="max-width: 90%;">All
+                                    Years</span>
+                            </button>
+                            <ul class="dropdown-menu w-100 shadow-sm" aria-labelledby="yearFilterBtn" id="yearMenu">
+                                {% for year in stats.years_available %}
+                                <li>
+                                    <label class="dropdown-item dropdown-item-checkbox">
+                                        <input type="checkbox" class="form-check-input me-2" value="{{ year[0] }}"
+                                            onchange="updateYearFilter()">
+                                        <span class="checkbox-label">{{ year[0] }}</span>
+                                    </label>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
-                    <div class="col-12 col-md-3">
+                    <div class="col-12 col-md-2">
                         <label for="categoryFilter" class="form-label">Category</label>
-                        <select id="categoryFilter" class="form-select" onchange="applyFilters()"
+                        <select id="categoryFilter" class="form-select" onchange="loadChargeNames()"
                             aria-label="Filter by category">
                             <option value="">All Categories</option>
                             {% for category in stats.categories %}
@@ -85,21 +98,30 @@
                         </select>
                     </div>
                     <div class="col-12 col-md-3">
+                        <label for="chargeNameFilter" class="form-label">Specific Charge</label>
+                        <select id="chargeNameFilter" class="form-select" onchange="applyFilters()"
+                            aria-label="Filter by charge name" disabled>
+                            <option value="">Select category first...</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2">
                         <label for="documentTypeFilter" class="form-label">Document Type</label>
-                        <div class="dropup" id="documentTypeDropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button"
-                                id="documentTypeFilterBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside"
-                                aria-expanded="false">
-                                <span id="documentTypeLabel">All Types</span>
+                        <div class="dropdown" id="documentTypeDropdown">
+                            <button
+                                class="btn btn-outline-secondary dropdown-toggle w-100 text-start form-select-height"
+                                type="button" id="documentTypeFilterBtn" data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside" aria-expanded="false">
+                                <span id="documentTypeLabel" class="d-inline-block text-truncate"
+                                    style="max-width: 90%;">All Types</span>
                             </button>
-                            <ul class="dropdown-menu w-100" aria-labelledby="documentTypeFilterBtn"
+                            <ul class="dropdown-menu w-100 shadow-sm" aria-labelledby="documentTypeFilterBtn"
                                 id="documentTypeMenu">
                                 {% for doc_type in stats.document_types %}
                                 <li>
-                                    <label class="dropdown-item">
+                                    <label class="dropdown-item dropdown-item-checkbox">
                                         <input type="checkbox" class="form-check-input me-2" value="{{ doc_type[0] }}"
                                             onchange="updateDocumentTypeFilter()">
-                                        {{ doc_type[0] }}
+                                        <span class="checkbox-label">{{ doc_type[0] }}</span>
                                     </label>
                                 </li>
                                 {% endfor %}
@@ -125,6 +147,18 @@
             <div class="card-body">
                 <h5 class="card-title"><i class="fas fa-chart-area"></i> Year-over-Year Trends</h5>
                 <canvas id="trendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reserve Balance Chart -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-piggy-bank"></i> Sinking Fund / Reserve Balance</h5>
+                <canvas id="reserveChart"></canvas>
             </div>
         </div>
     </div>
@@ -170,10 +204,42 @@
         }
     }
 
+    /* Document Type Filter Styling - Match form-select appearance */
+    #documentTypeFilterBtn {
+        font-size: 1rem;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        border-color: #ced4da;
+        background-color: #fff;
+        color: #212529;
+        height: calc(1.5em + 0.75rem + 2px);
+        /* Match form-select height */
+        line-height: 1.5;
+    }
+
+    #documentTypeFilterBtn:hover {
+        border-color: #86b7fe;
+        background-color: #fff;
+    }
+
+    #documentTypeFilterBtn:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        background-color: #fff;
+    }
+
+    .form-select-height {
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+
+    #documentTypeLabel {
+        vertical-align: middle;
+    }
+
     #documentTypeMenu {
-        max-height: 200px;
+        max-height: 250px;
         overflow-y: auto;
         z-index: 1050;
+        border: 1px solid rgba(0, 0, 0, 0.15);
     }
 
     .dropdown-menu {
@@ -185,6 +251,71 @@
     #documentTypeDropdown {
         position: relative;
         z-index: 1000;
+    }
+
+    #yearDropdown {
+        position: relative;
+        z-index: 1000;
+    }
+
+    #yearFilterBtn {
+        font-size: 1rem;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        border-color: #ced4da;
+        background-color: #fff;
+        color: #212529;
+        height: calc(1.5em + 0.75rem + 2px);
+        line-height: 1.5;
+    }
+
+    #yearFilterBtn:hover {
+        border-color: #86b7fe;
+        background-color: #fff;
+    }
+
+    #yearFilterBtn:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        background-color: #fff;
+    }
+
+    #yearLabel {
+        vertical-align: middle;
+    }
+
+    #yearMenu {
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 1050;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .dropdown-item-checkbox {
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .dropdown-item-checkbox:hover {
+        background-color: #f8f9fa;
+    }
+
+    .dropdown-item-checkbox input[type="checkbox"] {
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .dropdown-item-checkbox .checkbox-label {
+        flex-grow: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .charge-name-tooltip {
+        cursor: help;
+        border-bottom: 1px dotted #6c757d;
+        white-space: nowrap;
     }
 
     .dropdown-item {
@@ -219,16 +350,37 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
     let trendsChart;
+    let reserveChart;
 
     // Load data on page load
+    // Store glossary data
+    let glossaryData = {};
+
     document.addEventListener('DOMContentLoaded', function () {
         console.log('DOM loaded, initializing dashboard');
+        loadGlossary();
         loadTrends();
         loadCharges();
+        loadReserves();
     });
 
+    function loadGlossary() {
+        fetch('/api/glossary')
+            .then(response => response.json())
+            .then(data => {
+                glossaryData = data;
+                console.log(`Loaded ${Object.keys(glossaryData).length} glossary entries`);
+            })
+            .catch(error => console.error('Error loading glossary:', error));
+    }
+
     function loadTrends() {
+        const category = document.getElementById('categoryFilter').value;
+        const chargeName = document.getElementById('chargeNameFilter').value;
+
         let url = '/api/trends?charge_type=expense';
+        if (category) url += `&category_id=${category}`;
+        if (chargeName) url += `&charge_name=${encodeURIComponent(chargeName)}`;
 
         fetch(url)
             .then(response => response.json())
@@ -241,9 +393,23 @@
 
                 const datasets = [];
 
-                // Audited Accounts (Actuals) - solid line
+                // Income - purple dotted line
+                if (data.income) {
+                    datasets.push({
+                        label: 'Income (Service Charges)',
+                        data: data.income,
+                        borderColor: 'rgb(111, 66, 193)',
+                        backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [2, 2],
+                        tension: 0.1,
+                        spanGaps: true
+                    });
+                }
+
+                // Audited Accounts (Actuals) - solid green line
                 datasets.push({
-                    label: 'Audited Accounts (Actuals)',
+                    label: 'Audited Accounts (Expenses)',
                     data: data.actuals,
                     borderColor: 'rgb(25, 135, 84)',
                     backgroundColor: 'rgba(25, 135, 84, 0.1)',
@@ -252,7 +418,7 @@
                     spanGaps: true
                 });
 
-                // Proposed Budgets - dashed line
+                // Proposed Budgets - dashed blue line
                 datasets.push({
                     label: 'Proposed Budgets',
                     data: data.budgets,
@@ -287,7 +453,12 @@
                             tooltip: {
                                 callbacks: {
                                     label: function (context) {
-                                        return 'EUR ' + context.parsed.y.toLocaleString();
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += '€' + context.parsed.y.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        return label;
                                     }
                                 }
                             }
@@ -299,20 +470,27 @@
     }
 
     function loadCharges() {
-        const year = document.getElementById('yearFilter').value;
+        const yearCheckboxes = document.querySelectorAll('#yearMenu input[type="checkbox"]:checked');
+        const selectedYears = Array.from(yearCheckboxes).map(cb => cb.value);
         const category = document.getElementById('categoryFilter').value;
+        const chargeName = document.getElementById('chargeNameFilter').value;
         const checkboxes = document.querySelectorAll('#documentTypeMenu input[type="checkbox"]:checked');
         const selectedDocTypes = Array.from(checkboxes).map(cb => cb.value);
 
         console.log('Loading charges with filters:', {
-            year: year,
+            years: selectedYears,
             category: category,
+            chargeName: chargeName,
             documentTypes: selectedDocTypes
         });
 
         let url = '/api/charges?';
-        if (year) url += `year=${year}&`;
+        // Add multiple years
+        selectedYears.forEach(yr => {
+            url += `year=${yr}&`;
+        });
         if (category) url += `category_id=${category}&`;
+        if (chargeName) url += `charge_name=${encodeURIComponent(chargeName)}&`;
 
         // Add multiple document types
         selectedDocTypes.forEach(dt => {
@@ -326,13 +504,19 @@
             .then(data => {
                 console.log('Received data:', data.length, 'charges');
                 console.log('Document types in data:', [...new Set(data.map(c => c.document_type))]);
+                console.log('Years in data:', [...new Set(data.map(c => c.year))]);
 
                 const thead = document.querySelector('#chargesTableHead');
                 const tbody = document.querySelector('#chargesTable tbody');
 
+                // If multiple years selected, create year comparison view
+                if (selectedYears.length > 1) {
+                    console.log('Creating year comparison table');
+                    createYearComparisonTable(data, selectedYears, selectedDocTypes, thead, tbody);
+                }
                 // If multiple document types selected, create comparison view
-                if (selectedDocTypes.length > 1) {
-                    console.log('Creating comparison table');
+                else if (selectedDocTypes.length > 1) {
+                    console.log('Creating document type comparison table');
                     createComparisonTable(data, selectedDocTypes, thead, tbody);
                 } else {
                     console.log('Creating standard table');
@@ -357,14 +541,86 @@
         tbody.innerHTML = '';
         data.forEach(charge => {
             const row = tbody.insertRow();
+            const glossaryEntry = glossaryData[charge.charge_name];
+            const hasTooltip = glossaryEntry ? 'class="charge-name-tooltip"' : '';
+            const tooltipAttrs = glossaryEntry ?
+                `data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title="<strong>${charge.charge_name}</strong><br>${glossaryEntry.definition}<br><small class='text-muted'>${glossaryEntry.examples}</small>"` : '';
+
             row.innerHTML = `
                 <td>${charge.year}</td>
-                <td>${charge.charge_name}</td>
+                <td ${hasTooltip} ${tooltipAttrs}>${charge.charge_name} ${glossaryEntry ? '<i class="fas fa-info-circle text-muted ms-1"></i>' : ''}</td>
                 <td>${charge.category || 'Uncategorized'}</td>
                 <td><span class="badge bg-secondary">${charge.document_type || 'N/A'}</span></td>
-                <td>${charge.currency} ${charge.amount.toFixed(2)}</td>
+                <td>€${charge.amount.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             `;
         });
+
+        // Initialize Bootstrap tooltips
+        initializeTooltips();
+    }
+
+    function createYearComparisonTable(data, selectedYears, selectedDocTypes, thead, tbody) {
+        // Year comparison view: charge names in rows, years in columns
+        console.log('createYearComparisonTable called with:', {
+            dataCount: data.length,
+            selectedYears: selectedYears,
+            selectedDocTypes: selectedDocTypes
+        });
+
+        // Build header - show years as columns
+        let headerHTML = '<tr><th>Charge Name</th><th>Category</th><th>Document Type</th>';
+        selectedYears.sort().forEach(year => {
+            headerHTML += `<th class="text-end">${year}</th>`;
+        });
+        headerHTML += '</tr>';
+        thead.innerHTML = headerHTML;
+
+        // Group charges by charge_name and document_type
+        const chargeMap = {};
+        data.forEach(charge => {
+            const docType = charge.document_type || 'N/A';
+            const key = `${charge.charge_name}|${docType}`;
+            if (!chargeMap[key]) {
+                chargeMap[key] = {
+                    charge_name: charge.charge_name,
+                    category: charge.category,
+                    document_type: docType,
+                    amounts: {}
+                };
+            }
+            chargeMap[key].amounts[charge.year] = charge.amount;
+        });
+
+        // Build table rows
+        tbody.innerHTML = '';
+        Object.values(chargeMap).forEach(charge => {
+            const row = tbody.insertRow();
+            const glossaryEntry = glossaryData[charge.charge_name];
+            const hasTooltip = glossaryEntry ? 'class="charge-name-tooltip"' : '';
+            const tooltipAttrs = glossaryEntry ?
+                `data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title="<strong>${charge.charge_name}</strong><br>${glossaryEntry.definition}<br><small class='text-muted'>${glossaryEntry.examples}</small>"` : '';
+
+            let rowHTML = `
+                <td ${hasTooltip} ${tooltipAttrs}>${charge.charge_name} ${glossaryEntry ? '<i class="fas fa-info-circle text-muted ms-1"></i>' : ''}</td>
+                <td>${charge.category || 'Uncategorized'}</td>
+                <td><span class="badge bg-secondary">${charge.document_type}</span></td>
+            `;
+
+            // Add amount columns for each year
+            selectedYears.sort().forEach(year => {
+                const amount = charge.amounts[year];
+                if (amount !== undefined) {
+                    rowHTML += `<td class="text-end">€${amount.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
+                } else {
+                    rowHTML += `<td class="text-center text-muted">-</td>`;
+                }
+            });
+
+            row.innerHTML = rowHTML;
+        });
+
+        // Initialize Bootstrap tooltips
+        initializeTooltips();
     }
 
     function createComparisonTable(data, selectedDocTypes, thead, tbody) {
@@ -415,9 +671,14 @@
         tbody.innerHTML = '';
         Object.values(chargeMap).forEach(charge => {
             const row = tbody.insertRow();
+            const glossaryEntry = glossaryData[charge.charge_name];
+            const hasTooltip = glossaryEntry ? 'class="charge-name-tooltip"' : '';
+            const tooltipAttrs = glossaryEntry ?
+                `data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title="<strong>${charge.charge_name}</strong><br>${glossaryEntry.definition}<br><small class='text-muted'>${glossaryEntry.examples}</small>"` : '';
+
             let rowHTML = `
                 <td>${charge.year}</td>
-                <td>${charge.charge_name}</td>
+                <td ${hasTooltip} ${tooltipAttrs}>${charge.charge_name} ${glossaryEntry ? '<i class="fas fa-info-circle text-muted ms-1"></i>' : ''}</td>
                 <td>${charge.category || 'Uncategorized'}</td>
             `;
 
@@ -429,7 +690,7 @@
             selectedDocTypes.forEach(docType => {
                 const amount = charge.amounts[docType];
                 if (amount !== undefined) {
-                    rowHTML += `<td class="text-end">EUR ${amount.toFixed(2)}</td>`;
+                    rowHTML += `<td class="text-end">€${amount.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
                     if (docType === 'Proposed Budget') proposedAmount = amount;
                     if (docType === 'Audited Accounts') auditedAmount = amount;
                 } else {
@@ -444,7 +705,7 @@
                     const variancePercent = proposedAmount !== 0 ? (variance / proposedAmount * 100) : 0;
                     const varianceClass = variance > 0 ? 'variance-negative text-danger-custom' : variance < 0 ? 'variance-positive text-success-custom' : '';
                     const varianceSign = variance > 0 ? '+' : '';
-                    rowHTML += `<td class="text-end ${varianceClass}">${varianceSign}EUR ${variance.toFixed(2)} (${varianceSign}${variancePercent.toFixed(1)}%)</td>`;
+                    rowHTML += `<td class="text-end ${varianceClass}">${varianceSign}€${variance.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${varianceSign}${variancePercent.toFixed(1)}%)</td>`;
                 } else {
                     rowHTML += `<td class="text-center text-muted">-</td>`;
                 }
@@ -452,11 +713,54 @@
 
             row.innerHTML = rowHTML;
         });
+
+        // Initialize Bootstrap tooltips
+        initializeTooltips();
+    }
+
+    function initializeTooltips() {
+        // Dispose old tooltips first
+        const tooltipElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipElements.forEach(el => {
+            const tooltip = bootstrap.Tooltip.getInstance(el);
+            if (tooltip) {
+                tooltip.dispose();
+            }
+        });
+
+        // Initialize new tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     }
 
     function applyFilters() {
         loadTrends();
         loadCharges();
+    }
+
+    function updateYearFilter() {
+        const checkboxes = document.querySelectorAll('#yearMenu input[type="checkbox"]');
+        const checked = Array.from(checkboxes).filter(cb => cb.checked);
+        const label = document.getElementById('yearLabel');
+
+        if (!label) {
+            console.error('Year label not found');
+            return;
+        }
+
+        if (checked.length === 0) {
+            label.textContent = 'All Years';
+        } else if (checked.length === 1) {
+            label.textContent = String.fromCharCode(10003) + ' ' + checked[0].value;
+        } else {
+            // Show the years in order
+            const years = checked.map(cb => cb.value).sort();
+            label.textContent = String.fromCharCode(10003) + ' ' + years.join(', ');
+        }
+
+        applyFilters();
     }
 
     function updateDocumentTypeFilter() {
@@ -480,13 +784,52 @@
         applyFilters();
     }
 
+    function loadChargeNames() {
+        const category = document.getElementById('categoryFilter').value;
+        const chargeNameSelect = document.getElementById('chargeNameFilter');
+
+        if (!category) {
+            chargeNameSelect.disabled = true;
+            chargeNameSelect.innerHTML = '<option value="">Select category first...</option>';
+            applyFilters();
+            return;
+        }
+
+        fetch(`/api/charge-names?category_id=${category}`)
+            .then(response => response.json())
+            .then(data => {
+                chargeNameSelect.disabled = false;
+                chargeNameSelect.innerHTML = '<option value="">All charges in category</option>';
+
+                data.charge_names.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    chargeNameSelect.appendChild(option);
+                });
+
+                applyFilters();
+            })
+            .catch(error => console.error('Error loading charge names:', error));
+    }
+
     function resetFilters() {
-        const yearFilter = document.getElementById('yearFilter');
+        const yearLabel = document.getElementById('yearLabel');
         const categoryFilter = document.getElementById('categoryFilter');
+        const chargeNameFilter = document.getElementById('chargeNameFilter');
         const documentTypeLabel = document.getElementById('documentTypeLabel');
 
-        if (yearFilter) yearFilter.value = '';
+        // Clear year checkboxes
+        const yearCheckboxes = document.querySelectorAll('#yearMenu input[type="checkbox"]');
+        yearCheckboxes.forEach(cb => cb.checked = false);
+        if (yearLabel) yearLabel.textContent = 'All Years';
+
         if (categoryFilter) categoryFilter.value = '';
+        if (chargeNameFilter) {
+            chargeNameFilter.value = '';
+            chargeNameFilter.disabled = true;
+            chargeNameFilter.innerHTML = '<option value="">Select category first...</option>';
+        }
 
         const checkboxes = document.querySelectorAll('#documentTypeMenu input[type="checkbox"]');
         checkboxes.forEach(cb => cb.checked = false);
@@ -495,6 +838,126 @@
 
         loadTrends();
         loadCharges();
+    }
+
+    function loadReserves() {
+        fetch('/api/reserves')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('reserveChart').getContext('2d');
+
+                if (reserveChart) {
+                    reserveChart.destroy();
+                }
+
+                // Calculate net change for each year (contributions - expenditures)
+                const netChanges = data.contributions.map((contrib, idx) => {
+                    const contrib_val = contrib || 0;
+                    const expend_val = data.expenditures[idx] || 0;
+                    return contrib_val - expend_val;
+                });
+
+                reserveChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.years,
+                        datasets: [
+                            {
+                                label: 'Opening Balance',
+                                data: data.opening_balances,
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2,
+                                type: 'line',
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Contributions',
+                                data: data.contributions,
+                                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Expenditures',
+                                data: data.expenditures.map(val => val ? -val : 0),
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Closing Balance',
+                                data: data.closing_balances,
+                                backgroundColor: 'rgba(255, 206, 86, 0.5)',
+                                borderColor: 'rgba(255, 206, 86, 1)',
+                                borderWidth: 2,
+                                type: 'line',
+                                fill: false,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Sinking Fund / Reserve Balance Over Time'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        const value = Math.abs(context.parsed.y);
+                                        label += '€' + value.toLocaleString('en-IE', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        });
+                                        return label;
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function (value) {
+                                        return '€' + Math.abs(value).toLocaleString('en-IE', {
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0
+                                        });
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Amount (€)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading reserves:', error));
     }
 </script>
 {% endblock %}

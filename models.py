@@ -87,3 +87,41 @@ class ProcessingLog(db.Model):
     
     def __repr__(self):
         return f'<ProcessingLog {self.status} at {self.timestamp}>'
+
+
+class ReserveBalance(db.Model):
+    """Track sinking fund/reserve balance over time"""
+    __tablename__ = 'reserve_balances'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    year = db.Column(db.Integer, nullable=False, unique=True)
+    opening_balance = db.Column(db.Float)  # Balance at start of year
+    contributions = db.Column(db.Float)  # Money added to reserve during year
+    expenditures = db.Column(db.Float)  # Money spent from reserve during year
+    closing_balance = db.Column(db.Float, nullable=False)  # Balance at end of year
+    source_document_id = db.Column(db.Integer, db.ForeignKey('documents.id'))
+    notes = db.Column(db.Text)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship
+    source_document = db.relationship('Document', backref='reserve_balances', lazy=True)
+    
+    def __repr__(self):
+        return f'<ReserveBalance {self.year}: EUR {self.closing_balance:,.2f}>'
+
+
+class ChargeGlossary(db.Model):
+    """Glossary of charge name definitions and explanations"""
+    __tablename__ = 'charge_glossary'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    charge_name = db.Column(db.String(200), nullable=False, unique=True, index=True)
+    definition = db.Column(db.Text, nullable=False)
+    examples = db.Column(db.Text)  # Examples of what this charge typically covers
+    is_active = db.Column(db.Boolean, default=True)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<ChargeGlossary {self.charge_name}>'

@@ -133,18 +133,25 @@ def process_document(document_id):
 @app.route('/api/charges')
 def get_charges():
     """Get all service charges with optional filtering"""
-    year = request.args.get('year', type=int)
+    # Support multiple years
+    years = request.args.getlist('year')
+    if years:
+        years = [int(y) for y in years]
+    
     category_id = request.args.get('category_id', type=int)
+    charge_name = request.args.get('charge_name')
     
     # Support multiple document types
     document_types = request.args.getlist('document_type')
     
     query = ServiceCharge.query.join(Document)
     
-    if year:
-        query = query.filter(ServiceCharge.year == year)
+    if years:
+        query = query.filter(ServiceCharge.year.in_(years))
     if category_id:
         query = query.filter(ServiceCharge.category_id == category_id)
+    if charge_name:
+        query = query.filter(ServiceCharge.charge_name == charge_name)
     if document_types:
         query = query.filter(Document.document_type.in_(document_types))
     
@@ -163,10 +170,12 @@ def get_charges():
 
 @app.route('/api/trends')
 def get_trends():
-    """Get year-over-year trend data with separate lines for actuals and budgets"""
+    """Get year-over-year trend data with separate lines for actuals, budgets, and income"""
     from sqlalchemy import func
     
     charge_type = request.args.get('charge_type', 'expense')  # Default to expenses only
+    category_id = request.args.get('category_id', type=int)
+    charge_name = request.args.get('charge_name')
     
     # Get audited accounts (actuals)
     actuals_query = db.session.query(
@@ -175,8 +184,14 @@ def get_trends():
     ).join(Document).filter(
         Document.document_type == 'Audited Accounts',
         ServiceCharge.charge_type == charge_type
-    ).group_by(ServiceCharge.year).order_by(ServiceCharge.year)
+    )
     
+    if category_id:
+        actuals_query = actuals_query.filter(ServiceCharge.category_id == category_id)
+    if charge_name:
+        actuals_query = actuals_query.filter(ServiceCharge.charge_name == charge_name)
+    
+    actuals_query = actuals_query.group_by(ServiceCharge.year).order_by(ServiceCharge.year)
     actuals = actuals_query.all()
     
     # Get proposed budgets
@@ -186,21 +201,65 @@ def get_trends():
     ).join(Document).filter(
         Document.document_type == 'Proposed Budget',
         ServiceCharge.charge_type == charge_type
-    ).group_by(ServiceCharge.year).order_by(ServiceCharge.year)
+    )
     
+    if category_id:
+        budgets_query = budgets_query.filter(ServiceCharge.category_id == category_id)
+    if charge_name:
+        budgets_query = budgets_query.filter(ServiceCharge.charge_name == charge_name)
+    
+    budgets_query = budgets_query.group_by(ServiceCharge.year).order_by(ServiceCharge.year)
     budgets = budgets_query.all()
     
+    # Get income data (from audited accounts only) - but ONLY when not filtering by category/charge
+    # Income is total revenue, so it doesn't make sense to show it when filtering specific expenses
+    income = []
+    if not category_id and not charge_name:
+        income_query = db.session.query(
+            ServiceCharge.year,
+            func.sum(ServiceCharge.amount).label('total_amount')
+        ).join(Document).filter(
+            Document.document_type == 'Audited Accounts',
+            ServiceCharge.charge_type == 'income'
+        ).group_by(ServiceCharge.year).order_by(ServiceCharge.year)
+        
+        income = income_query.all()
+    
     # Combine all years
-    all_years = sorted(set([t.year for t in actuals] + [t.year for t in budgets]))
+    all_years = sorted(set([t.year for t in actuals] + [t.year for t in budgets] + [t.year for t in income]))
     
     # Build response with separate datasets
     actuals_dict = {t.year: float(t.total_amount) for t in actuals}
     budgets_dict = {t.year: float(t.total_amount) for t in budgets}
+    income_dict = {t.year: float(t.total_amount) for t in income}
     
     return jsonify({
         'years': all_years,
         'actuals': [actuals_dict.get(year, None) for year in all_years],
-        'budgets': [budgets_dict.get(year, None) for year in all_years]
+        'budgets': [budgets_dict.get(year, None) for year in all_years],
+        'income': [income_dict.get(year, None) for year in all_years]
+    })
+
+
+@app.route('/api/charge-names')
+def get_charge_names():
+    """Get distinct charge names for a specific category"""
+    from sqlalchemy import func, distinct
+    
+    category_id = request.args.get('category_id', type=int)
+    
+    if not category_id:
+        return jsonify({'error': 'category_id required'}), 400
+    
+    # Get distinct charge names for this category, ordered alphabetically
+    charge_names = db.session.query(
+        distinct(ServiceCharge.charge_name)
+    ).filter(
+        ServiceCharge.category_id == category_id
+    ).order_by(ServiceCharge.charge_name).all()
+    
+    return jsonify({
+        'charge_names': [name[0] for name in charge_names]
     })
 
 
@@ -214,6 +273,36 @@ def get_categories():
         'name': c.name,
         'description': c.description
     } for c in categories])
+
+
+@app.route('/api/glossary')
+def get_glossary():
+    """Get all glossary definitions"""
+    from models import ChargeGlossary
+    
+    glossary = ChargeGlossary.query.filter_by(is_active=True).all()
+    
+    return jsonify({entry.charge_name: {
+        'definition': entry.definition,
+        'examples': entry.examples
+    } for entry in glossary})
+
+
+@app.route('/api/reserves')
+def get_reserves():
+    """Get reserve balance data over time"""
+    from models import ReserveBalance
+    
+    reserves = ReserveBalance.query.order_by(ReserveBalance.year).all()
+    
+    return jsonify({
+        'years': [r.year for r in reserves],
+        'opening_balances': [r.opening_balance for r in reserves],
+        'contributions': [r.contributions for r in reserves],
+        'expenditures': [r.expenditures for r in reserves],
+        'closing_balances': [r.closing_balance for r in reserves],
+        'notes': [r.notes for r in reserves]
+    })
 
 
 @app.route('/comparison')

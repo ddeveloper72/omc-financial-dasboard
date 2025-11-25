@@ -1,55 +1,53 @@
 """
-Check current database state
+Check year-by-year totals
 """
-from pathlib import Path
-import sys
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import sessionmaker
+from models import Document, ServiceCharge
 
-# Add project root to path
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
+engine = create_engine('sqlite:///instance/db.sqlite3')
+Session = sessionmaker(bind=engine)
+session = Session()
 
-from app import app, db
-from models import ServiceCharge, Document
+print("Year-by-Year Breakdown:")
+print("="*80)
 
-def check_data():
-    """Check what data is in the database"""
-    with app.app_context():
-        # Count documents
-        total_docs = Document.query.count()
-        completed_docs = Document.query.filter_by(status='completed').count()
-        print(f"Documents: {completed_docs}/{total_docs} completed")
-        
-        # Count documents by type
-        print("\nDocuments by type:")
-        for doc_type in ['Audited Accounts', 'Proposed Budget', 'AGM Minutes', 'Other']:
-            count = Document.query.filter_by(document_type=doc_type).count()
-            print(f"  {doc_type}: {count}")
-        
-        # Count charges
-        total_charges = ServiceCharge.query.count()
-        print(f"\nTotal charges: {total_charges}")
-        
-        if total_charges > 0:
-            # Count by charge_type
-            print("\nCharges by type:")
-            expense_count = ServiceCharge.query.filter_by(charge_type='expense').count()
-            income_count = ServiceCharge.query.filter_by(charge_type='income').count()
-            balance_sheet_count = ServiceCharge.query.filter_by(charge_type='balance_sheet').count()
-            print(f"  expense: {expense_count}")
-            print(f"  income: {income_count}")
-            print(f"  balance_sheet: {balance_sheet_count}")
-            
-            # Sample charges
-            print("\nSample charges:")
-            sample_charges = ServiceCharge.query.join(Document).limit(10).all()
-            for charge in sample_charges:
-                print(f"  [{charge.charge_type}] {charge.charge_name}: EUR {charge.amount} ({charge.document.document_type})")
-        else:
-            print("\n⚠️ NO CHARGES FOUND - Documents need to be processed!")
-            print("\nDocuments pending processing:")
-            pending = Document.query.filter_by(status='pending').all()
-            for doc in pending:
-                print(f"  - {doc.filename} ({doc.document_type})")
+for year in [2019, 2021, 2022, 2023, 2024, 2025]:
+    print(f"\nYear {year}:")
+    print("-"*80)
+    
+    # Proposed Budget
+    proposed = session.query(
+        func.sum(ServiceCharge.amount)
+    ).join(Document).filter(
+        ServiceCharge.year == year,
+        Document.document_type == 'Proposed Budget'
+    ).scalar()
+    
+    # Audited Accounts
+    audited = session.query(
+        func.sum(ServiceCharge.amount)
+    ).join(Document).filter(
+        ServiceCharge.year == year,
+        Document.document_type == 'Audited Accounts'
+    ).scalar()
+    
+    print(f"  Proposed Budget: EUR {proposed:>12,.2f}" if proposed else "  Proposed Budget: None")
+    print(f"  Audited Accounts: EUR {audited:>12,.2f}" if audited else "  Audited Accounts: None")
+    
+    # Show charge counts
+    if proposed:
+        count = session.query(ServiceCharge).join(Document).filter(
+            ServiceCharge.year == year,
+            Document.document_type == 'Proposed Budget'
+        ).count()
+        print(f"  Proposed charges: {count}")
+    
+    if audited:
+        count = session.query(ServiceCharge).join(Document).filter(
+            ServiceCharge.year == year,
+            Document.document_type == 'Audited Accounts'
+        ).count()
+        print(f"  Audited charges: {count}")
 
-if __name__ == '__main__':
-    check_data()
+session.close()
