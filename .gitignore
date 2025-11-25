@@ -38,5 +38,29 @@ Thumbs.db
 # Logs
 *.log
 
+# Test and analysis scripts (development only)
+test_*.py
+check_*.py
+analyze_*.py
+fix_*.py
+import_*.py
+reprocess_*.py
+remove_*.py
+investigate_*.py
+scan_*.py
+standardize_*.py
+verify_*.py
+find_*.py
+create_*.py
+align_*.py
+alignment_*.py
+analyze_output.txt
+update_data.bat
+
+# Sensitive data - organization specific
+**/AGM/
+*.pdf
+.github/copilot-instructions.md
+
 # VS Code AI rules
 .github\instructions\codacy.instructions.md
