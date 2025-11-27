@@ -1,10 +1,37 @@
+"""
+Database Models - YTS Budget Analysis
+
+This module defines the SQLAlchemy database models for storing
+financial document data and processing logs.
+
+Data Protection:
+- No personal data stored (financial information only)
+- Local SQLite database (no cloud transmission)
+- Audit trail maintained via processing_log table
+
+Technical Reference:
+- SQLAlchemy: https://docs.sqlalchemy.org/
+- SQLite: https://www.sqlite.org/docs.html
+
+EU AI Act & GDPR Compliance:
+- Data minimization principle followed
+- Purpose limitation respected (financial analysis only)
+- Transparency through audit logging
+- See COMPLIANCE.md for full documentation
+"""
+
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 db = SQLAlchemy()
 
 class Document(db.Model):
-    """Track processed AGM documents"""
+    """
+    Track processed AGM documents.
+    
+    Stores metadata about source documents for audit trail
+    and to prevent duplicate processing.
+    """
     __tablename__ = 'documents'
     
     id = db.Column(db.Integer, primary_key=True)

@@ -1,3 +1,21 @@
+"""
+PDF Parser - Text Extraction Utility
+
+This module extracts text from PDF documents using deterministic methods.
+No AI, ML, or OCR algorithms are employed.
+
+Technical Reference:
+- pypdf library: https://pypdf.readthedocs.io/
+- PDF specification: ISO 32000-2:2020
+
+EU AI Act Compliance:
+- Rule-based text extraction only (no AI/ML)
+- Direct access to PDF text layer
+- Deterministic, repeatable results
+
+See COMPLIANCE.md for full documentation.
+"""
+
 import logging
 from pathlib import Path
 from typing import Optional, Dict
@@ -7,7 +25,12 @@ logger = logging.getLogger(__name__)
 
 
 class PDFParser:
-    """Extract text content from PDF documents"""
+    """
+    Extract text content from PDF documents using pypdf library.
+    
+    This is a deterministic, rule-based extraction process.
+    No machine learning or AI algorithms are used.
+    """
     
     def __init__(self):
         self.encoding = 'utf-8'

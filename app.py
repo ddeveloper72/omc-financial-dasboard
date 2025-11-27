@@ -1,3 +1,28 @@
+"""
+YTS Budget Analysis - Flask Application
+
+This application extracts and analyzes service charge data from OMC AGM documents.
+It uses rule-based text extraction (no AI/ML) to process PDF financial documents.
+
+EU AI Act Compliance:
+- Not classified as high-risk AI system (EU AI Act Article 6, Annex III)
+- No machine learning or AI algorithms employed
+- Rule-based deterministic processing only
+- Processes financial data only (no personal information)
+
+Data Protection:
+- GDPR compliant (EU Regulation 2016/679)
+- Local storage only, no external data transmission
+- Data minimization and purpose limitation principles followed
+
+For full compliance documentation, see COMPLIANCE.md
+
+Technical References:
+- Flask Framework: https://flask.palletsprojects.com/
+- SQLAlchemy: https://docs.sqlalchemy.org/
+- pypdf Library: https://pypdf.readthedocs.io/
+"""
+
 import os
 import logging
 from flask import Flask, render_template, jsonify, request
@@ -37,6 +62,12 @@ DOCUMENT_SOURCE_PATH = os.getenv('DOCUMENT_SOURCE_PATH')
 def index():
     """Home page with overview"""
     return render_template('index.html')
+
+
+@app.route('/about')
+def about():
+    """About page with compliance documentation and references"""
+    return render_template('about.html')
 
 
 @app.route('/dashboard')
@@ -414,6 +445,110 @@ def get_comparison_data():
     results.sort(key=lambda x: abs(x['variance']), reverse=True)
     
     return jsonify(results)
+
+
+@app.route('/api/gap-analysis')
+def gap_analysis():
+    """Compare budgets between two years"""
+    year1 = request.args.get('year1', type=int)
+    year2 = request.args.get('year2', type=int)
+    
+    if not year1 or not year2:
+        return jsonify({'error': 'Both year1 and year2 are required'}), 400
+    
+    if year1 == year2:
+        return jsonify({'error': 'Please select two different years'}), 400
+    
+    # Get all charges for both years
+    year1_charges = ServiceCharge.query.filter_by(year=year1).all()
+    year2_charges = ServiceCharge.query.filter_by(year=year2).all()
+    
+    # Create dictionaries for easy lookup
+    year1_dict = {}
+    for charge in year1_charges:
+        key = charge.charge_name.strip().lower()
+        if key in year1_dict:
+            year1_dict[key]['amount'] += charge.amount
+        else:
+            year1_dict[key] = {
+                'name': charge.charge_name,
+                'amount': charge.amount,
+                'category': charge.category.name if charge.category else 'Other'
+            }
+    
+    year2_dict = {}
+    for charge in year2_charges:
+        key = charge.charge_name.strip().lower()
+        if key in year2_dict:
+            year2_dict[key]['amount'] += charge.amount
+        else:
+            year2_dict[key] = {
+                'name': charge.charge_name,
+                'amount': charge.amount,
+                'category': charge.category.name if charge.category else 'Other'
+            }
+    
+    # Get all unique charge names
+    all_charges = set(year1_dict.keys()) | set(year2_dict.keys())
+    
+    details = []
+    total_year1 = 0
+    total_year2 = 0
+    increases_count = 0
+    decreases_count = 0
+    increases_total = 0
+    decreases_total = 0
+    
+    for charge_key in all_charges:
+        year1_data = year1_dict.get(charge_key, {'name': '', 'amount': 0, 'category': 'Other'})
+        year2_data = year2_dict.get(charge_key, {'name': '', 'amount': 0, 'category': 'Other'})
+        
+        charge_name = year2_data.get('name') or year1_data.get('name')
+        year1_amount = year1_data['amount']
+        year2_amount = year2_data['amount']
+        category = year2_data.get('category') or year1_data.get('category')
+        
+        change = year2_amount - year1_amount
+        
+        total_year1 += year1_amount
+        total_year2 += year2_amount
+        
+        if change > 0:
+            increases_count += 1
+            increases_total += change
+        elif change < 0:
+            decreases_count += 1
+            decreases_total += change
+        
+        details.append({
+            'charge_name': charge_name,
+            'category': category,
+            'year1_amount': round(year1_amount, 2),
+            'year2_amount': round(year2_amount, 2),
+            'change': round(change, 2)
+        })
+    
+    # Sort by absolute change (biggest changes first)
+    details.sort(key=lambda x: abs(x['change']), reverse=True)
+    
+    total_change = total_year2 - total_year1
+    total_change_percent = ((total_change / total_year1) * 100) if total_year1 > 0 else 0
+    
+    return jsonify({
+        'year1': year1,
+        'year2': year2,
+        'summary': {
+            'total_year1': round(total_year1, 2),
+            'total_year2': round(total_year2, 2),
+            'total_change': round(total_change, 2),
+            'total_change_percent': round(total_change_percent, 2),
+            'increases_count': increases_count,
+            'decreases_count': decreases_count,
+            'increases_total': round(increases_total, 2),
+            'decreases_total': round(decreases_total, 2)
+        },
+        'details': details
+    })
 
 
 def init_db():

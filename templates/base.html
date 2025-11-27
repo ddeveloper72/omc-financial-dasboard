@@ -45,6 +45,11 @@
                             <i class="fas fa-balance-scale"></i> Actuals vs Budget
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('about') }}">
+                            <i class="fas fa-info-circle"></i> About & Compliance
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -60,7 +65,22 @@
     <!-- Footer -->
     <footer class="bg-light text-center text-muted py-3 mt-5">
         <div class="container">
-            <p class="mb-0">Yewtree Square OMC Budget Analysis &copy; 2025</p>
+            <p class="mb-1">Yewtree Square OMC Budget Analysis &copy; 2025</p>
+            <p class="mb-0 small">
+                <span class="text-success"><i class="fas fa-check-circle"></i> EU AI Act Compliant</span> |
+                <span class="text-success"><i class="fas fa-shield-alt"></i> GDPR Compliant</span> |
+                <span class="text-info"><i class="fas fa-book"></i> Rule-based Processing (No AI/ML)</span>
+            </p>
+            <p class="mb-0 small mt-1">
+                <a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj" target="_blank" class="text-decoration-none"
+                    title="EU AI Act Regulation">
+                    <i class="fas fa-external-link-alt"></i> EU Regulation 2024/1689
+                </a> |
+                <a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj" target="_blank" class="text-decoration-none"
+                    title="GDPR Regulation">
+                    <i class="fas fa-external-link-alt"></i> EU Regulation 2016/679
+                </a>
+            </p>
         </div>
     </footer>
 

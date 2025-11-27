@@ -194,6 +194,107 @@
     </div>
 </div>
 
+<!-- Gap Analysis Section -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-line"></i> Budget Gap Analysis</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="printChart('gapAnalysisChart')">
+                        <i class="fas fa-print"></i> Print Chart
+                    </button>
+                </div>
+
+                <!-- Year Selectors -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-5">
+                        <label for="gapYear1" class="form-label">Compare From Year</label>
+                        <select class="form-select" id="gapYear1" onchange="loadGapAnalysis()">
+                            <option value="">Select Year...</option>
+                            {% for year in stats.years_available %}
+                            <option value="{{ year[0] }}" {% if year[0]==2025 %}selected{% endif %}>{{ year[0] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 d-flex align-items-end justify-content-center">
+                        <div class="text-center">
+                            <i class="fas fa-arrow-right fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-5">
+                        <label for="gapYear2" class="form-label">To Year</label>
+                        <select class="form-select" id="gapYear2" onchange="loadGapAnalysis()">
+                            <option value="">Select Year...</option>
+                            {% for year in stats.years_available %}
+                            <option value="{{ year[0] }}" {% if year[0]==2026 %}selected{% endif %}>{{ year[0] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Analysis Summary Cards -->
+                <div class="row g-3 mb-4" id="gapSummaryCards">
+                    <div class="col-12 col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">Total Change</h6>
+                                <h3 id="totalChange" class="mb-0">-</h3>
+                                <small id="totalChangePercent" class="text-muted">-</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">Increases</h6>
+                                <h3 id="increasesCount" class="mb-0 text-danger">-</h3>
+                                <small id="increasesTotal" class="text-muted">-</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">Decreases</h6>
+                                <h3 id="decreasesCount" class="mb-0 text-success">-</h3>
+                                <small id="decreasesTotal" class="text-muted">-</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <canvas id="gapAnalysisChart"></canvas>
+
+                <!-- Detailed Table -->
+                <div class="mt-4">
+                    <h6><i class="fas fa-list"></i> Detailed Breakdown</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover" id="gapDetailsTable">
+                            <thead>
+                                <tr>
+                                    <th>Charge</th>
+                                    <th>Category</th>
+                                    <th class="text-end">Year 1</th>
+                                    <th class="text-end">Year 2</th>
+                                    <th class="text-end">Change (€)</th>
+                                    <th class="text-end">Change (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Charges Table -->
 <div class="row">
     <div class="col-md-12">
@@ -266,6 +367,13 @@
                     </label>
                 </div>
 
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" value="gapAnalysis" id="includeGapAnalysis" checked>
+                    <label class="form-check-label" for="includeGapAnalysis">
+                        <i class="fas fa-chart-line text-info"></i> Budget Gap Analysis Chart
+                    </label>
+                </div>
+
                 <hr>
 
                 <div class="mb-3">
@@ -276,8 +384,9 @@
 
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
-                    <small>Charts will be combined on a single page. The booklet will be generated and opened in a new
-                        window for printing or saving as PDF.</small>
+                    <small>Each chart will be printed on its own landscape page. The Gap Analysis will include both the
+                        chart and detailed table. The booklet will be generated and opened in a new window for printing
+                        or saving as PDF.</small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -492,6 +601,7 @@
 <script>
     let trendsChart;
     let reserveChart;
+    let gapAnalysisChart;
 
     // Load data on page load
     // Store glossary data
@@ -597,14 +707,15 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         console.log('DOM loaded, initializing dashboard');
-        
+
         // Initialize filters to ensure checkboxes are in sync BEFORE loading data
         initializeFilters();
-        
+
         loadGlossary();
         loadTrends();
         loadCharges();
         loadReserves();
+        loadGapAnalysis();
     });
 
     function initializeFilters() {
@@ -616,7 +727,7 @@
                 cb.checked = true;
             });
         }
-        
+
         // Ensure document type checkboxes match the "All Types" state
         const docTypeSelectAll = document.getElementById('docTypeSelectAll');
         const docTypeCheckboxes = document.querySelectorAll('#documentTypeMenu .doctype-option');
@@ -625,8 +736,8 @@
                 cb.checked = true;
             });
         }
-        
-        console.log('Filters initialized - years checked:', 
+
+        console.log('Filters initialized - years checked:',
             Array.from(yearCheckboxes).filter(cb => cb.checked).length,
             'doc types checked:',
             Array.from(docTypeCheckboxes).filter(cb => cb.checked).length);
@@ -1182,6 +1293,171 @@
             .catch(error => console.error('Error loading reserves:', error));
     }
 
+    // Load gap analysis
+    function loadGapAnalysis() {
+        const year1 = document.getElementById('gapYear1').value;
+        const year2 = document.getElementById('gapYear2').value;
+
+        if (!year1 || !year2) {
+            console.log('Gap analysis: Years not selected yet');
+            return;
+        }
+
+        if (year1 === year2) {
+            alert('Please select two different years for comparison');
+            return;
+        }
+
+        fetch(`/api/gap-analysis?year1=${year1}&year2=${year2}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Gap analysis data:', data);
+
+                // Update summary cards
+                const totalChange = data.summary.total_change;
+                const totalChangePercent = data.summary.total_change_percent;
+
+                document.getElementById('totalChange').textContent =
+                    (totalChange >= 0 ? '+' : '') + '€' + Math.abs(totalChange).toLocaleString('en-IE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                document.getElementById('totalChange').className =
+                    'mb-0 ' + (totalChange >= 0 ? 'text-danger' : 'text-success');
+
+                document.getElementById('totalChangePercent').textContent =
+                    (totalChangePercent >= 0 ? '+' : '') + totalChangePercent.toFixed(1) + '%';
+
+                document.getElementById('increasesCount').textContent = data.summary.increases_count;
+                document.getElementById('increasesTotal').textContent =
+                    '+€' + Math.abs(data.summary.increases_total).toLocaleString('en-IE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                document.getElementById('decreasesCount').textContent = data.summary.decreases_count;
+                document.getElementById('decreasesTotal').textContent =
+                    '-€' + Math.abs(data.summary.decreases_total).toLocaleString('en-IE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                // Populate detailed table
+                const tbody = document.querySelector('#gapDetailsTable tbody');
+                tbody.innerHTML = '';
+
+                data.details.forEach(item => {
+                    const row = tbody.insertRow();
+                    const changeAmount = item.year2_amount - item.year1_amount;
+                    const changePercent = item.year1_amount !== 0
+                        ? ((changeAmount / item.year1_amount) * 100).toFixed(1)
+                        : (item.year2_amount > 0 ? '∞' : '0.0');
+
+                    const changeClass = changeAmount > 0 ? 'text-danger' : (changeAmount < 0 ? 'text-success' : 'text-muted');
+
+                    row.innerHTML = `
+                        <td>${item.charge_name}</td>
+                        <td><span class="badge bg-secondary">${item.category}</span></td>
+                        <td class="text-end">€${item.year1_amount.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="text-end">€${item.year2_amount.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="text-end ${changeClass}"><strong>${changeAmount >= 0 ? '+' : ''}€${Math.abs(changeAmount).toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
+                        <td class="text-end ${changeClass}"><strong>${changePercent !== '∞' ? (changeAmount >= 0 ? '+' : '') + changePercent + '%' : 'New'}</strong></td>
+                    `;
+                });
+
+                // Create chart
+                const ctx = document.getElementById('gapAnalysisChart').getContext('2d');
+
+                if (gapAnalysisChart) {
+                    gapAnalysisChart.destroy();
+                }
+
+                // Prepare data for chart - show top changes (positive and negative)
+                const sortedChanges = [...data.details].sort((a, b) =>
+                    Math.abs(b.year2_amount - b.year1_amount) - Math.abs(a.year2_amount - a.year1_amount)
+                );
+                const topChanges = sortedChanges.slice(0, 15); // Top 15 changes
+
+                gapAnalysisChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: topChanges.map(item => item.charge_name),
+                        datasets: [{
+                            label: `${year1} Budget`,
+                            data: topChanges.map(item => item.year1_amount),
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }, {
+                            label: `${year2} Budget`,
+                            data: topChanges.map(item => item.year2_amount),
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 2,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Budget Comparison: ${year1} vs ${year2} (Top Changes)`
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += '€' + context.parsed.y.toLocaleString('en-IE', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        });
+                                        return label;
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return '€' + value.toLocaleString('en-IE', {
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0
+                                        });
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Amount (€)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    autoSkip: false,
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading gap analysis:', error);
+                alert('Error loading gap analysis. Please try again.');
+            });
+    }
+
     // Print table function
     function printTable() {
         const printWindow = window.open('', '_blank');
@@ -1228,19 +1504,19 @@
 
 </html>
 `);
-printWindow.document.close();
-}
+        printWindow.document.close();
+    }
 
-// Print chart function
-function printChart(chartId) {
-const canvas = document.getElementById(chartId);
-const chartTitle = canvas.closest('.card').querySelector('.card-title').textContent.trim();
-const filterInfo = getFilterInfo();
+    // Print chart function
+    function printChart(chartId) {
+        const canvas = document.getElementById(chartId);
+        const chartTitle = canvas.closest('.card').querySelector('.card-title').textContent.trim();
+        const filterInfo = getFilterInfo();
 
-const printWindow = window.open('', '_blank');
-const chartImage = canvas.toDataURL('image/png');
+        const printWindow = window.open('', '_blank');
+        const chartImage = canvas.toDataURL('image/png');
 
-printWindow.document.write(`
+        printWindow.document.write(`
 <!DOCTYPE html>
 <html>
 
@@ -1248,7 +1524,7 @@ printWindow.document.write(`
     <title>${chartTitle} - Print</title>
     <style>
         @page {
-            size: A4;
+            size: A4 landscape;
             margin: 1cm;
         }
 
@@ -1256,6 +1532,7 @@ printWindow.document.write(`
             font-family: Arial, sans-serif;
             text-align: center;
             padding: 20px;
+            margin: 0;
         }
 
         .header {
@@ -1265,6 +1542,11 @@ printWindow.document.write(`
         img {
             max-width: 100%;
             height: auto;
+            page-break-inside: avoid;
+        }
+        
+        @media print {
+            body { overflow: hidden; }
         }
     </style>
 </head>
@@ -1290,26 +1572,27 @@ printWindow.document.write(`
 
 </html>
 `);
-printWindow.document.close();
-}
+        printWindow.document.close();
+    }
 
-// Generate PDF booklet
-function generatePDFBooklet() {
-const includeTable = document.getElementById('includeTable').checked;
-const includeTrends = document.getElementById('includeTrends').checked;
-const includeIncome = document.getElementById('includeIncome').checked;
-const includeReserves = document.getElementById('includeReserves').checked;
-const bookletTitle = document.getElementById('bookletTitle').value || 'Service Charges Report';
+    // Generate PDF booklet
+    function generatePDFBooklet() {
+        const includeTable = document.getElementById('includeTable').checked;
+        const includeTrends = document.getElementById('includeTrends').checked;
+        const includeIncome = document.getElementById('includeIncome').checked;
+        const includeReserves = document.getElementById('includeReserves').checked;
+        const includeGapAnalysis = document.getElementById('includeGapAnalysis').checked;
+        const bookletTitle = document.getElementById('bookletTitle').value || 'Service Charges Report';
 
-if (!includeTable && !includeTrends && !includeIncome && !includeReserves) {
-alert('Please select at least one report to include in the booklet.');
-return;
-}
+        if (!includeTable && !includeTrends && !includeIncome && !includeReserves && !includeGapAnalysis) {
+            alert('Please select at least one report to include in the booklet.');
+            return;
+        }
 
-const filterInfo = getFilterInfo();
-const printWindow = window.open('', '_blank');
+        const filterInfo = getFilterInfo();
+        const printWindow = window.open('', '_blank');
 
-let content = `
+        let content = `
 <!DOCTYPE html>
 <html>
 
@@ -1318,7 +1601,7 @@ let content = `
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         @page {
-            size: A4;
+            size: A4 landscape;
             margin: 1.5cm;
         }
 
@@ -1329,7 +1612,7 @@ let content = `
         }
 
         .cover-page {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -1338,17 +1621,23 @@ let content = `
         }
 
         .section {
-            page-break-after: always;
             padding: 20px 0;
+            page-break-inside: avoid;
         }
 
-        .section:last-child {
-            page-break-after: auto;
+        .section:not(:last-child) {
+            page-break-after: always;
         }
 
         .chart-container {
             margin: 30px 0;
             text-align: center;
+            page-break-inside: avoid;
+            page-break-after: always;
+        }
+
+        .chart-container:last-child {
+            page-break-after: avoid;
         }
 
         .chart-container img {
@@ -1360,6 +1649,11 @@ let content = `
             display: flex;
             flex-direction: column;
             gap: 20px;
+        }
+        
+        @media print {
+            body { margin: 0; padding: 0; }
+            .section:last-child { page-break-after: avoid; }
         }
 
         h2 {
@@ -1399,43 +1693,101 @@ let content = `
     </div>
     `;
 
-    // Add table if selected
-    if (includeTable) {
-    const tableHTML = document.getElementById('chargesTable').outerHTML;
-    content += `
+        // Add table if selected
+        if (includeTable) {
+            const tableHTML = document.getElementById('chargesTable').outerHTML;
+            content += `
     <div class="section">
         <h2>Service Charges</h2>
         ${tableHTML}
     </div>
     `;
-    }
+        }
 
-    // Add charts page (all selected charts on one page)
-    const selectedCharts = [];
-    if (includeTrends) selectedCharts.push({ id: 'trendsChart', title: 'Service Charges Trend' });
-    if (includeIncome) selectedCharts.push({ id: 'incomeExpensesChart', title: 'Income vs Expenses' });
-    if (includeReserves) selectedCharts.push({ id: 'reserveChart', title: 'Sinking Fund / Reserve Balance' });
+        // Add charts page (all selected charts on one page)
+        const selectedCharts = [];
+        if (includeTrends) selectedCharts.push({ id: 'trendsChart', title: 'Service Charges Trend' });
+        if (includeIncome) selectedCharts.push({ id: 'incomeExpensesChart', title: 'Income vs Expenses' });
+        if (includeReserves) selectedCharts.push({ id: 'reserveChart', title: 'Sinking Fund / Reserve Balance' });
+        if (includeGapAnalysis) selectedCharts.push({ id: 'gapAnalysisChart', title: 'Budget Gap Analysis' });
 
-    if (selectedCharts.length > 0) {
-        content += '<div class="section"><h2>Charts & Analysis</h2><div class="charts-page">';
+        if (selectedCharts.length > 0) {
+            content += '<div class="section"><h2>Charts & Analysis</h2><div class="charts-page">';
 
-        selectedCharts.forEach(chart => {
-            const canvas = document.getElementById(chart.id);
-            if (canvas) {
-                const chartImage = canvas.toDataURL('image/png');
-                content += `
+            selectedCharts.forEach(chart => {
+                const canvas = document.getElementById(chart.id);
+                if (canvas) {
+                    const chartImage = canvas.toDataURL('image/png');
+                    content += `
                     <div class="chart-container">
                         <h4>${chart.title}</h4>
                         <img src="${chartImage}" alt="${chart.title}">
                     </div>
                 `;
+                }
+            });
+
+            content += '</div></div>';
+        }
+
+        // Add gap analysis detailed table if selected
+        if (includeGapAnalysis) {
+            const gapTable = document.getElementById('gapDetailsTable');
+            const year1 = document.getElementById('gapYear1').value;
+            const year2 = document.getElementById('gapYear2').value;
+
+            if (gapTable && year1 && year2) {
+                // Get summary data
+                const totalChange = document.getElementById('totalChange').textContent;
+                const totalChangePercent = document.getElementById('totalChangePercent').textContent;
+                const increasesCount = document.getElementById('increasesCount').textContent;
+                const increasesTotal = document.getElementById('increasesTotal').textContent;
+                const decreasesCount = document.getElementById('decreasesCount').textContent;
+                const decreasesTotal = document.getElementById('decreasesTotal').textContent;
+
+                const gapTableHTML = gapTable.outerHTML;
+                content += `
+    <div class="section">
+        <h2>Budget Gap Analysis Details (${year1} vs ${year2})</h2>
+        
+        <div class="row mb-4">
+            <div class="col-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Total Change</h6>
+                        <h3>${totalChange}</h3>
+                        <small class="text-muted">${totalChangePercent}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Increases</h6>
+                        <h3 class="text-danger">${increasesCount}</h3>
+                        <small class="text-muted">${increasesTotal}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Decreases</h6>
+                        <h3 class="text-success">${decreasesCount}</h3>
+                        <small class="text-muted">${decreasesTotal}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h4>Detailed Breakdown</h4>
+        ${gapTableHTML}
+    </div>
+    `;
             }
-        });
+        }
 
-        content += '</div></div>';
-    }
-
-    content += `
+        content += `
     <script>
                     window.onload = function() {
                         setTimeout(() => {
@@ -1448,31 +1800,31 @@ let content = `
 </html>
 `;
 
-printWindow.document.write(content);
-printWindow.document.close();
+        printWindow.document.write(content);
+        printWindow.document.close();
 
-// Close the modal
-const modal = bootstrap.Modal.getInstance(document.getElementById('pdfBookletModal'));
-if (modal) modal.hide();
-}
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('pdfBookletModal'));
+        if (modal) modal.hide();
+    }
 
-// Helper function to get current filter information
-function getFilterInfo() {
-const selectedYears = Array.from(document.querySelectorAll('#yearMenu .year-option:checked'))
-.map(cb => cb.value)
-.join(', ');
+    // Helper function to get current filter information
+    function getFilterInfo() {
+        const selectedYears = Array.from(document.querySelectorAll('#yearMenu .year-option:checked'))
+            .map(cb => cb.value)
+            .join(', ');
 
-const selectedDocTypes = Array.from(document.querySelectorAll('#documentTypeMenu .doctype-option:checked'))
-.map(cb => cb.value)
-.join(', ');
-const docType = selectedDocTypes || 'All Types';
+        const selectedDocTypes = Array.from(document.querySelectorAll('#documentTypeMenu .doctype-option:checked'))
+            .map(cb => cb.value)
+            .join(', ');
+        const docType = selectedDocTypes || 'All Types';
 
-const selectedCategory = document.getElementById('categoryFilter').value;
-const categoryText = selectedCategory ?
-document.querySelector(`#categoryFilter option[value="${selectedCategory}"]`).textContent :
-'All Categories';
+        const selectedCategory = document.getElementById('categoryFilter').value;
+        const categoryText = selectedCategory ?
+            document.querySelector(`#categoryFilter option[value="${selectedCategory}"]`).textContent :
+            'All Categories';
 
-return `Years: ${selectedYears || 'All'} | Document Type: ${docType} | Category: ${categoryText}`;
-}
+        return `Years: ${selectedYears || 'All'} | Document Type: ${docType} | Category: ${categoryText}`;
+    }
 </script>
 {% endblock %}

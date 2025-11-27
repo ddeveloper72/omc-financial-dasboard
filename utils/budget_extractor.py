@@ -1,3 +1,24 @@
+"""
+Budget Extractor - Financial Data Extraction Utility
+
+This module extracts service charge data from document text using pattern matching.
+No AI, ML, or NLP algorithms are employed.
+
+Technical Approach:
+- Regular expression pattern matching
+- Rule-based text parsing
+- Deterministic categorization based on keywords
+- Currency normalization (EUR)
+
+EU AI Act Compliance:
+- Rule-based extraction only (no AI/ML)
+- Deterministic, repeatable results
+- No learning or adaptive behavior
+- Transparent processing logic
+
+See COMPLIANCE.md for full documentation.
+"""
+
 import re
 import logging
 from typing import List, Dict, Optional, Tuple
@@ -7,7 +28,12 @@ logger = logging.getLogger(__name__)
 
 
 class BudgetExtractor:
-    """Extract service charge information from document text"""
+    """
+    Extract service charge information from document text using pattern matching.
+    
+    This is a deterministic, rule-based extraction process.
+    No machine learning, NLP, or AI algorithms are used.
+    """
     
     def __init__(self):
         # Common patterns for currency amounts

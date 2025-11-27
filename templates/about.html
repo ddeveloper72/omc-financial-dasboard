@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}About & Compliance - YTS Budget Analysis{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-info-circle"></i> About & Compliance</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Application Overview -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Application Overview</h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">YTS Budget Analysis is a financial data extraction and visualization tool for Yewtree
+                    Square Owner's Management Company (OMC).</p>
+
+                <h6 class="mt-3"><i class="fas fa-cogs"></i> Technical Approach</h6>
+                <ul>
+                    <li><strong>Rule-Based Processing</strong>: Uses pattern matching and text extraction (no AI/ML)
+                    </li>
+                    <li><strong>Deterministic Results</strong>: Same input always produces same output</li>
+                    <li><strong>Transparent Operations</strong>: All processing is logged and auditable</li>
+                    <li><strong>Local Storage</strong>: Data stored locally only (no cloud transmission)</li>
+                </ul>
+
+                <h6 class="mt-3"><i class="fas fa-database"></i> Data Processing</h6>
+                <ul>
+                    <li><strong>Input</strong>: PDF documents (budgets, accounts, AGM minutes)</li>
+                    <li><strong>Processing</strong>: Text extraction → Pattern matching → Categorization → Storage</li>
+                    <li><strong>Output</strong>: Dashboards, charts, reports, gap analysis</li>
+                    <li><strong>Data Type</strong>: Financial service charges only (no personal data)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- EU AI Act Compliance -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-check-circle"></i> EU AI Act Compliance</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <i class="fas fa-certificate"></i> <strong>Compliant with EU Regulation 2024/1689</strong>
+                </div>
+
+                <h6><i class="fas fa-list-check"></i> Compliance Summary</h6>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Classification</strong></td>
+                            <td>Not a high-risk AI system (Article 6, Annex III)</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>AI/ML Usage</strong></td>
+                            <td>No machine learning or AI algorithms employed</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Processing Method</strong></td>
+                            <td>Rule-based, deterministic pattern matching only</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Data Type</strong></td>
+                            <td>Financial data only (no personal information)</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Human Oversight</strong></td>
+                            <td>Full human control and decision-making (Article 14)</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Transparency</strong></td>
+                            <td>Processing logs, audit trails, clear documentation (Article 13)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p class="mb-0">
+                    <a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj" target="_blank"
+                        class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-external-link-alt"></i> Read EU AI Act (Official Text)
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- GDPR Compliance -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-shield-alt"></i> GDPR Compliance</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-shield-alt"></i> <strong>Compliant with EU Regulation 2016/679 & Irish Data
+                        Protection Act 2018</strong>
+                </div>
+
+                <h6><i class="fas fa-list-check"></i> Data Protection Principles</h6>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Data Minimization</strong></td>
+                            <td>Only financial service charge data is collected</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Purpose Limitation</strong></td>
+                            <td>Data used solely for internal financial analysis</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Storage Limitation</strong></td>
+                            <td>Local storage only (no cloud transmission)</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>No Personal Data</strong></td>
+                            <td>System processes financial amounts and categories only</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Security</strong></td>
+                            <td>Local access only, no remote connections</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><strong>Transparency</strong></td>
+                            <td>Full audit trail and processing logs maintained</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p class="mb-0">
+                    <a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj" target="_blank"
+                        class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-external-link-alt"></i> Read GDPR (Official Text)
+                    </a>
+                    <a href="https://www.irishstatutebook.ie/eli/2018/act/7/enacted/en/html" target="_blank"
+                        class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-external-link-alt"></i> Irish Data Protection Act 2018
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Technical Documentation -->
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-book"></i> Technical Documentation</h5>
+            </div>
+            <div class="card-body">
+                <h6><i class="fas fa-layer-group"></i> Technology Stack</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mt-3">Backend</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-code"></i> <strong>Flask 3.0</strong> - <a
+                                    href="https://flask.palletsprojects.com/" target="_blank">Documentation</a></li>
+                            <li><i class="fas fa-database"></i> <strong>SQLAlchemy 2.0</strong> - <a
+                                    href="https://docs.sqlalchemy.org/" target="_blank">Documentation</a></li>
+                            <li><i class="fas fa-file-pdf"></i> <strong>pypdf</strong> - <a
+                                    href="https://pypdf.readthedocs.io/" target="_blank">Documentation</a></li>
+                            <li><i class="fab fa-python"></i> <strong>Python 3.13.7</strong> - <a
+                                    href="https://docs.python.org/3.13/" target="_blank">Documentation</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="mt-3">Frontend</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fab fa-bootstrap"></i> <strong>Bootstrap 5.3</strong> - <a
+                                    href="https://getbootstrap.com/docs/5.3/" target="_blank">Documentation</a></li>
+                            <li><i class="fas fa-chart-bar"></i> <strong>Chart.js 4.4</strong> - <a
+                                    href="https://www.chartjs.org/docs/latest/" target="_blank">Documentation</a></li>
+                            <li><i class="fas fa-icons"></i> <strong>Font Awesome 6.5</strong> - <a
+                                    href="https://fontawesome.com/docs" target="_blank">Documentation</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h6 class="mt-3"><i class="fas fa-standard"></i> Standards & Specifications</h6>
+                <ul>
+                    <li><strong>ISO 32000-2:2020</strong> - PDF specification</li>
+                    <li><strong>ISO/IEC 23053:2022</strong> - Framework for AI Systems Using Machine Learning (for
+                        reference only - not applicable)</li>
+                    <li><strong>ISO/IEC 42001:2023</strong> - Artificial Intelligence Management System (for reference
+                        only - not applicable)</li>
+                </ul>
+
+                <h6 class="mt-3"><i class="fas fa-gavel"></i> Irish Legislation</h6>
+                <ul>
+                    <li><strong>Companies Act 2014</strong> - Financial reporting requirements for OMCs - <a
+                            href="https://www.irishstatutebook.ie/eli/2014/act/38/enacted/en/html"
+                            target="_blank">View</a></li>
+                    <li><strong>Data Protection Act 2018</strong> - GDPR implementation in Ireland - <a
+                            href="https://www.irishstatutebook.ie/eli/2018/act/7/enacted/en/html"
+                            target="_blank">View</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Full Documentation -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="fas fa-file-alt"></i> Complete Documentation</h5>
+            </div>
+            <div class="card-body">
+                <p>For comprehensive compliance documentation, technical specifications, and detailed references, see:
+                </p>
+                <p>
+                    <a href="https://github.com/ddeveloper72/omc-financial-dasboard/blob/master/COMPLIANCE.md"
+                        target="_blank" class="btn btn-primary">
+                        <i class="fas fa-file-contract"></i> View Full COMPLIANCE.md
+                    </a>
+                    <a href="https://github.com/ddeveloper72/omc-financial-dasboard/blob/master/README.md"
+                        target="_blank" class="btn btn-secondary">
+                        <i class="fas fa-readme"></i> View README.md
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="card mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-envelope"></i> Contact & Repository</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Project Owner:</strong> ddeveloper72 (GitHub)</p>
+                <p><strong>Repository:</strong> <a href="https://github.com/ddeveloper72/omc-financial-dasboard"
+                        target="_blank">https://github.com/ddeveloper72/omc-financial-dasboard</a></p>
+                <p><strong>Purpose:</strong> Private financial analysis tool for Yewtree Square OMC</p>
+                <p><strong>Scope:</strong> Internal use only, not a commercial AI system</p>
+                <p class="mb-0"><strong>Last Updated:</strong> November 27, 2025</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

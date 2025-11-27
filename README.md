@@ -2,6 +2,8 @@
 
 A Flask-based web application for data mining and visualizing Yewtree Square Owner's Management Company (OMC) service charges from AGM documents.
 
+**Documentation**: See [COMPLIANCE.md](COMPLIANCE.md) for EU AI Act compliance, data governance, and technical documentation references.
+
 ## Features
 
 - **Document Processing**: Automatically scan and extract data from PDF documents
@@ -143,6 +145,31 @@ If PDF text extraction fails:
 - Check if PDF contains actual text (not just images)
 - Review processing logs in the database
 
+## Compliance and Legal
+
+### EU AI Act Compliance
+This application complies with the EU Artificial Intelligence Act (Regulation (EU) 2024/1689). For detailed compliance documentation, see [COMPLIANCE.md](COMPLIANCE.md).
+
+**Key Points**:
+- Not classified as a high-risk AI system (EU AI Act, Article 6)
+- No machine learning or AI algorithms employed
+- Rule-based data extraction and analysis only
+- Processes financial data only (no personal data)
+- Full transparency and human oversight maintained
+
+### Data Protection
+- GDPR compliant (Regulation (EU) 2016/679)
+- Data Protection Act 2018 (Ireland)
+- Local data storage only
+- No personal data processing
+
+### Documentation References
+All technical standards, regulations, and documentation sources are listed in [COMPLIANCE.md](COMPLIANCE.md), including:
+- EU AI Act and GDPR official texts
+- ISO/IEC standards for AI systems
+- Technical library documentation
+- Irish Companies Act requirements
+
 ## License
 
 Private project for Yewtree Square OMC
@@ -150,3 +177,9 @@ Private project for Yewtree Square OMC
 ## Contributing
 
 This is a private project. Please contact the owner for contribution guidelines.
+
+## References
+
+- **EU AI Act**: [EUR-Lex Official Text](https://eur-lex.europa.eu/eli/reg/2024/1689/oj)
+- **GDPR**: [EUR-Lex Official Text](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
+- **Project Documentation**: [COMPLIANCE.md](COMPLIANCE.md)
