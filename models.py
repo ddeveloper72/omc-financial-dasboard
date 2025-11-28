@@ -152,3 +152,52 @@ class ChargeGlossary(db.Model):
     
     def __repr__(self):
         return f'<ChargeGlossary {self.charge_name}>'
+
+
+class ActualCost(db.Model):
+    """
+    Store actual costs incurred (from invoices and receipts).
+    
+    This table tracks real spending to enable budget vs actual variance analysis.
+    Data imported from Excel workbooks containing supplier invoices.
+    """
+    __tablename__ = 'actual_costs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Invoice details
+    date = db.Column(db.Date, nullable=False, index=True)
+    supplier = db.Column(db.String(100), nullable=False)
+    invoice_number = db.Column(db.String(50))
+    description = db.Column(db.Text)
+    
+    # Amounts
+    net_amount = db.Column(db.Float, nullable=False)
+    vat_amount = db.Column(db.Float, default=0.0)
+    total_amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(3), default='EUR')
+    
+    # Temporal tracking
+    year = db.Column(db.Integer, nullable=False, index=True)
+    month = db.Column(db.Integer, nullable=False)  # 1-12
+    
+    # Categorization (link to budget categories)
+    category_id = db.Column(db.Integer, db.ForeignKey('charge_categories.id'))
+    
+    # Source tracking
+    document_id = db.Column(db.Integer, db.ForeignKey('documents.id'))
+    source_sheet = db.Column(db.String(100))  # Excel sheet name
+    
+    # Metadata
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    notes = db.Column(db.Text)
+    
+    # Note: No unique constraint here because many invoices lack invoice numbers
+    # Duplicates will be handled by the import logic
+    
+    # Relationships
+    category = db.relationship('ChargeCategory', backref='actual_costs', lazy=True)
+    document = db.relationship('Document', backref='actual_costs', lazy=True)
+    
+    def __repr__(self):
+        return f'<ActualCost {self.supplier} {self.date}: {self.currency}{self.total_amount}>'
