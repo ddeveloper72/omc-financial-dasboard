@@ -533,6 +533,47 @@ def get_invoice_comparison(year, category_id=None):
     return jsonify(results)
 
 
+@app.route('/api/category-charges')
+def get_category_charges():
+    """Get list of charges within a specific category for a given year"""
+    from sqlalchemy import func
+    
+    year = request.args.get('year', type=int)
+    category_name = request.args.get('category')
+    mode = request.args.get('mode', 'invoices')
+    
+    if not year or not category_name:
+        return jsonify({'error': 'Year and category parameters required'}), 400
+    
+    # Get the category
+    category = ChargeCategory.query.filter_by(name=category_name).first()
+    if not category:
+        return jsonify({'error': 'Category not found'}), 404
+    
+    # Get charges for this category from budget
+    budget_charges = db.session.query(
+        ServiceCharge.charge_name,
+        ServiceCharge.amount
+    ).join(Document).filter(
+        ServiceCharge.year == year,
+        ServiceCharge.category_id == category.id,
+        Document.document_type == 'Proposed Budget'
+    ).all()
+    
+    charges = [
+        {
+            'name': charge_name,
+            'amount': float(amount) if amount else 0
+        }
+        for charge_name, amount in budget_charges
+    ]
+    
+    # Sort by amount descending
+    charges.sort(key=lambda x: x['amount'], reverse=True)
+    
+    return jsonify(charges)
+
+
 @app.route('/api/gap-analysis')
 def gap_analysis():
     """Compare budgets between two years"""
