@@ -1,0 +1,187 @@
+================================================================================
+YEWTREE SQUARE OMC - SUPPLIER CATALOGUE
+Generated: now()
+================================================================================
+
+ASCENSION
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 11
+Total Spent: EUR 7,819.28
+Period: 2024-08-06 to 2025-08-01
+
+Service Categories:
+  • Lift/Elevator         11 invoices  EUR   7,819.28
+
+ASL
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 1
+Total Spent: EUR 1,872.75
+Period: 2025-08-13 to 2025-08-13
+
+Service Categories:
+  • Maintenance            1 invoices  EUR   1,872.75
+
+BORD GAIS
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 20
+Total Spent: EUR 8,186.69
+Period: 2024-10-18 to 2025-09-22
+
+Service Categories:
+  • Utilities             20 invoices  EUR   8,186.69
+
+Bord Gáis Energy
+--------------------------------------------------------------------------------
+Description: Electricity and energy supplier for common areas and apartments
+Total Invoices: 32
+Total Spent: EUR 13,626.90
+Period: 2024-09-26 to 2025-05-01
+
+Service Categories:
+  • Utilities             32 invoices  EUR  13,626.90
+
+CLEGGS
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 4
+Total Spent: EUR 1,203.18
+Period: 2024-10-31 to 2025-05-12
+
+Service Categories:
+  • Cleaning               4 invoices  EUR   1,203.18
+
+DG
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 12
+Total Spent: EUR 17,158.96
+Period: 2024-11-20 to 2025-09-05
+
+Service Categories:
+  • Cleaning              12 invoices  EUR  17,158.96
+
+Damien Kennedy
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 1
+Total Spent: EUR 1,750.00
+Period: 2025-09-11 to 2025-09-11
+
+Service Categories:
+  • Maintenance            1 invoices  EUR   1,750.00
+
+Darragh La Grue
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 1
+Total Spent: EUR 397.25
+Period: 2025-09-23 to 2025-09-23
+
+Service Categories:
+  • Maintenance            1 invoices  EUR     397.25
+
+EB ROOFING
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 1
+Total Spent: EUR 2,837.50
+Period: 2025-01-09 to 2025-01-09
+
+Service Categories:
+  • Maintenance            1 invoices  EUR   2,837.50
+
+EKO LANDSCAPE
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 12
+Total Spent: EUR 9,026.66
+Period: 2024-09-26 to 2025-09-25
+
+Service Categories:
+  • Grounds               12 invoices  EUR   9,026.66
+
+FMCG
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 1
+Total Spent: EUR 283.75
+Period: 2025-03-01 to 2025-03-01
+
+Service Categories:
+  • Maintenance            1 invoices  EUR     283.75
+
+Facilities Provides
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 1
+Total Spent: EUR 1,135.00
+Period: 2025-08-18 to 2025-08-18
+
+Service Categories:
+  • Maintenance            1 invoices  EUR   1,135.00
+
+Hawkeye
+--------------------------------------------------------------------------------
+Description: Service provider
+Total Invoices: 1
+Total Spent: EUR 246.00
+Period: 2025-06-30 to 2025-06-30
+
+Service Categories:
+  • Security               1 invoices  EUR     246.00
+
+JSECURE
+--------------------------------------------------------------------------------
+Description: Gate maintenance, access control and security systems
+Total Invoices: 51
+Total Spent: EUR 4,540.90
+Period: 2025-09-10 to 2025-09-10
+
+Service Categories:
+  • Maintenance            1 invoices  EUR     442.65
+  • Security              50 invoices  EUR   4,098.25
+
+MAGNET
+--------------------------------------------------------------------------------
+Description: Utility services
+Total Invoices: 13
+Total Spent: EUR 1,944.13
+Period: 2024-10-17 to 2025-09-01
+
+Service Categories:
+  • Utilities             13 invoices  EUR   1,944.13
+
+OMEGA
+--------------------------------------------------------------------------------
+Description: Security services and systems
+Total Invoices: 2
+Total Spent: EUR 9,225.00
+Period: 2024-09-30 to 2024-12-31
+
+Service Categories:
+  • Security               2 invoices  EUR   9,225.00
+
+THORNTONS
+--------------------------------------------------------------------------------
+Description: Professional cleaning services
+Total Invoices: 11
+Total Spent: EUR 19,119.89
+Period: 2024-08-31 to 2025-09-30
+
+Service Categories:
+  • Cleaning              11 invoices  EUR  19,119.89
+
+WILSHIRE
+--------------------------------------------------------------------------------
+Description: General property maintenance services
+Total Invoices: 8
+Total Spent: EUR 2,891.53
+Period: 2024-10-25 to 2024-10-25
+
+Service Categories:
+  • Cleaning               1 invoices  EUR     113.50
+  • Maintenance            7 invoices  EUR   2,778.03
+

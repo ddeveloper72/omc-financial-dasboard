@@ -34,7 +34,7 @@
             </div>
         </div>
     </div>
-    <div class="col-12 col-sm-6 col-lg-4">
+    <div class="col-12 col-sm-6 col-lg-3">
         <div class="card bg-info text-white h-100">
             <div class="card-body">
                 <h5 class="card-title">
@@ -42,6 +42,17 @@
                 </h5>
                 <h2>{{ stats.audited_years|length + stats.budget_years|length }}</h2>
                 <p class="card-text">Combined data years</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-file-invoice"></i> Invoice Actuals
+                </h5>
+                <h2>{{ stats.invoice_count }}</h2>
+                <p class="card-text">Supplier invoices tracked</p>
             </div>
         </div>
     </div>
@@ -54,19 +65,24 @@
             <div class="card-body">
                 <h5 class="card-title"><i class="fas fa-filter"></i> Comparison Filters</h5>
                 <div class="row g-3">
-                    <div class="col-12 col-md-5">
+                    <div class="col-12 col-md-3">
+                        <label for="modeSelect" class="form-label">Comparison Mode <span
+                                class="text-danger">*</span></label>
+                        <select id="modeSelect" class="form-select" onchange="updateYearOptions()">
+                            <option value="audited">Audited vs Budget</option>
+                            <option value="invoices" selected>Invoice Actuals vs Budget</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
                         <label for="yearSelect" class="form-label">Year <span class="text-danger">*</span></label>
                         <select id="yearSelect" class="form-select" onchange="loadComparison()" required>
                             <option value="">Select Year...</option>
-                            {% for year in stats.audited_years %}
-                            <option value="{{ year }}">{{ year }} (Audited)</option>
-                            {% endfor %}
-                            {% for year in stats.budget_years if year not in stats.audited_years %}
-                            <option value="{{ year }}">{{ year }} (Budget Only)</option>
+                            {% for year in stats.invoice_years %}
+                            <option value="{{ year }}">{{ year }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-12 col-md-5">
+                    <div class="col-12 col-md-4">
                         <label for="categorySelect" class="form-label">Category (Optional)</label>
                         <select id="categorySelect" class="form-select" onchange="loadComparison()">
                             <option value="">All Categories</option>
@@ -116,6 +132,18 @@
     </div>
 </div>
 
+<!-- Variance Chart -->
+<div class="row mb-4" id="chartRow" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-chart-bar"></i> Budget vs Actual Variance</h5>
+                <canvas id="varianceChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Comparison Table -->
 <div class="row">
     <div class="col-12">
@@ -150,10 +178,34 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+    let varianceChart = null;
+    const auditedYears = {{ stats.audited_years| tojson }};
+    const budgetYears = {{ stats.budget_years| tojson }};
+    const invoiceYears = {{ stats.invoice_years| tojson }};
+
+    function updateYearOptions() {
+        const mode = document.getElementById('modeSelect').value;
+        const yearSelect = document.getElementById('yearSelect');
+        yearSelect.innerHTML = '<option value="">Select Year...</option>';
+
+        let years = mode === 'invoices' ? invoiceYears : auditedYears;
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+
+        // Reset the comparison
+        resetComparison();
+    }
+
     function loadComparison() {
         const year = document.getElementById('yearSelect').value;
         const category = document.getElementById('categorySelect').value;
+        const mode = document.getElementById('modeSelect').value;
 
         if (!year) {
             document.querySelector('#comparisonTable tbody').innerHTML = `
@@ -164,10 +216,11 @@
                 </tr>
             `;
             document.getElementById('summaryRow').style.display = 'none';
+            document.getElementById('chartRow').style.display = 'none';
             return;
         }
 
-        let url = `/api/comparison?year=${year}`;
+        let url = `/api/comparison?year=${year}&mode=${mode}`;
         if (category) url += `&category_id=${category}`;
 
         fetch(url)
@@ -221,6 +274,10 @@
                 document.getElementById('variancePct').className = Math.abs(variancePct) > 10 ? 'text-warning fw-bold' : 'text-warning';
 
                 document.getElementById('summaryRow').style.display = 'block';
+
+                // Create variance chart
+                createVarianceChart(data);
+                document.getElementById('chartRow').style.display = 'block';
             })
             .catch(error => {
                 console.error('Error loading comparison:', error);
@@ -234,6 +291,92 @@
             });
     }
 
+    function createVarianceChart(data) {
+        const ctx = document.getElementById('varianceChart');
+
+        // Destroy existing chart
+        if (varianceChart) {
+            varianceChart.destroy();
+        }
+
+        // Extract data for chart
+        const labels = data.map(item => item.category);
+        const budgets = data.map(item => item.budget);
+        const actuals = data.map(item => item.actual);
+        const variances = data.map(item => item.variance);
+
+        // Color code variances (red = over budget, green = under budget)
+        const varianceColors = variances.map(v => v > 0 ? 'rgba(220, 53, 69, 0.7)' : 'rgba(40, 167, 69, 0.7)');
+
+        varianceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Budget',
+                        data: budgets,
+                        backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Actual',
+                        data: actuals,
+                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Variance',
+                        data: variances,
+                        backgroundColor: varianceColors,
+                        borderColor: varianceColors.map(c => c.replace('0.7', '1')),
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    title: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += '€' + context.parsed.y.toLocaleString('en-IE', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return '€' + value.toLocaleString('en-IE');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     function resetComparison() {
         document.getElementById('yearSelect').value = '';
         document.getElementById('categorySelect').value = '';
@@ -245,6 +388,17 @@
             </tr>
         `;
         document.getElementById('summaryRow').style.display = 'none';
+        document.getElementById('chartRow').style.display = 'none';
+
+        if (varianceChart) {
+            varianceChart.destroy();
+            varianceChart = null;
+        }
     }
+
+    // Initialize with invoice mode on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        updateYearOptions();
+    });
 </script>
 {% endblock %}
