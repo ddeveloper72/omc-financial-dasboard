@@ -28,7 +28,7 @@ import logging
 from flask import Flask, render_template, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
-from models import db, Document, ServiceCharge, ChargeCategory, ProcessingLog
+from models import db, Document, ServiceCharge, ChargeCategory, ProcessingLog, ActualCost
 from utils.document_scanner import DocumentScanner
 from utils.pdf_parser import PDFParser
 from utils.budget_extractor import BudgetExtractor
@@ -350,11 +350,16 @@ def comparison_dashboard():
         Document.document_type == 'Proposed Budget'
     ).distinct().all()
     
+    # Get years with actual costs (invoice data)
+    invoice_years = db.session.query(ActualCost.year).distinct().all()
+    
     stats = {
         'audited_count': Document.query.filter_by(document_type='Audited Accounts').count(),
         'budget_count': Document.query.filter_by(document_type='Proposed Budget').count(),
+        'invoice_count': ActualCost.query.count(),
         'audited_years': sorted([y[0] for y in audited_years if y[0]]),
         'budget_years': sorted([y[0] for y in budget_years if y[0]]),
+        'invoice_years': sorted([y[0] for y in invoice_years if y[0]]),
         'categories': ChargeCategory.query.filter_by(is_active=True).all()
     }
     
@@ -368,9 +373,14 @@ def get_comparison_data():
     
     year = request.args.get('year', type=int)
     category_id = request.args.get('category_id', type=int)
+    mode = request.args.get('mode', 'audited')  # 'audited' or 'invoices'
     
     if not year:
         return jsonify({'error': 'Year parameter required'}), 400
+    
+    # Mode: invoices - compare Budget vs Invoice Actuals
+    if mode == 'invoices':
+        return get_invoice_comparison(year, category_id)
     
     # Get audited actuals
     actuals_query = db.session.query(
@@ -442,6 +452,82 @@ def get_comparison_data():
         })
     
     # Sort by absolute variance (biggest differences first)
+    results.sort(key=lambda x: abs(x['variance']), reverse=True)
+    
+    return jsonify(results)
+
+
+def get_invoice_comparison(year, category_id=None):
+    """Compare proposed budget vs actual invoice costs by category"""
+    from sqlalchemy import func
+    
+    # Get proposed budget data (sum by category)
+    budget_query = db.session.query(
+        ChargeCategory.id,
+        ChargeCategory.name,
+        func.sum(ServiceCharge.amount).label('budget_amount')
+    ).join(ServiceCharge).join(Document).filter(
+        ServiceCharge.year == year,
+        Document.document_type == 'Proposed Budget'
+    )
+    
+    if category_id:
+        budget_query = budget_query.filter(ChargeCategory.id == category_id)
+    
+    budgets = budget_query.group_by(ChargeCategory.id, ChargeCategory.name).all()
+    
+    # Get actual costs data (sum by category)
+    actuals_query = db.session.query(
+        ChargeCategory.id,
+        ChargeCategory.name,
+        func.sum(ActualCost.total_amount).label('actual_amount')
+    ).join(ActualCost).filter(
+        ActualCost.year == year
+    )
+    
+    if category_id:
+        actuals_query = actuals_query.filter(ChargeCategory.id == category_id)
+    
+    actuals = actuals_query.group_by(ChargeCategory.id, ChargeCategory.name).all()
+    
+    # Combine data by category
+    comparison = {}
+    
+    for cat_id, cat_name, budget_amount in budgets:
+        comparison[cat_id] = {
+            'charge_name': cat_name,
+            'category': cat_name,
+            'budget': float(budget_amount) if budget_amount else 0,
+            'actual': 0
+        }
+    
+    for cat_id, cat_name, actual_amount in actuals:
+        if cat_id in comparison:
+            comparison[cat_id]['actual'] = float(actual_amount) if actual_amount else 0
+        else:
+            comparison[cat_id] = {
+                'charge_name': cat_name,
+                'category': cat_name,
+                'budget': 0,
+                'actual': float(actual_amount) if actual_amount else 0
+            }
+    
+    # Calculate variances
+    results = []
+    for data in comparison.values():
+        variance = data['actual'] - data['budget']
+        variance_pct = ((variance / data['budget']) * 100) if data['budget'] > 0 else 0
+        
+        results.append({
+            'charge_name': data['charge_name'],
+            'category': data['category'],
+            'actual': data['actual'],
+            'budget': data['budget'],
+            'variance': variance,
+            'variance_pct': variance_pct
+        })
+    
+    # Sort by absolute variance
     results.sort(key=lambda x: abs(x['variance']), reverse=True)
     
     return jsonify(results)
@@ -546,6 +632,95 @@ def gap_analysis():
             'decreases_count': decreases_count,
             'increases_total': round(increases_total, 2),
             'decreases_total': round(decreases_total, 2)
+        },
+        'details': details
+    })
+
+
+@app.route('/api/budget-vs-actual')
+def budget_vs_actual():
+    """
+    Compare budgeted amounts vs actual costs for a given year.
+    
+    Returns budget, actual, and variance by category.
+    Variance = Actual - Budget (positive means over budget)
+    """
+    year = request.args.get('year', type=int)
+    
+    if not year:
+        return jsonify({'error': 'year parameter is required'}), 400
+    
+    from sqlalchemy import func
+    
+    # Get budget data (sum by category)
+    budget_query = db.session.query(
+        ChargeCategory.id,
+        ChargeCategory.name,
+        func.sum(ServiceCharge.amount).label('budget_amount')
+    ).join(ServiceCharge).filter(
+        ServiceCharge.year == year
+    ).group_by(ChargeCategory.id).all()
+    
+    # Get actual cost data (sum by category)
+    actual_query = db.session.query(
+        ChargeCategory.id,
+        ChargeCategory.name,
+        func.sum(ActualCost.total_amount).label('actual_amount')
+    ).join(ActualCost).filter(
+        ActualCost.year == year
+    ).group_by(ChargeCategory.id).all()
+    
+    # Create dictionaries for easy lookup
+    budget_dict = {cat_id: {'name': name, 'amount': amount or 0} 
+                   for cat_id, name, amount in budget_query}
+    actual_dict = {cat_id: {'name': name, 'amount': amount or 0} 
+                   for cat_id, name, amount in actual_query}
+    
+    # Get all categories that have either budget or actual data
+    all_categories = set(budget_dict.keys()) | set(actual_dict.keys())
+    
+    details = []
+    total_budget = 0
+    total_actual = 0
+    
+    for cat_id in all_categories:
+        budget_data = budget_dict.get(cat_id, {'name': '', 'amount': 0})
+        actual_data = actual_dict.get(cat_id, {'name': '', 'amount': 0})
+        
+        category_name = budget_data.get('name') or actual_data.get('name')
+        budget_amount = budget_data['amount']
+        actual_amount = actual_data['amount']
+        
+        variance = actual_amount - budget_amount
+        variance_percent = ((variance / budget_amount) * 100) if budget_amount > 0 else 0
+        
+        total_budget += budget_amount
+        total_actual += actual_amount
+        
+        details.append({
+            'category': category_name,
+            'budget': round(budget_amount, 2),
+            'actual': round(actual_amount, 2),
+            'variance': round(variance, 2),
+            'variance_percent': round(variance_percent, 2),
+            'status': 'over' if variance > 0 else 'under' if variance < 0 else 'on'
+        })
+    
+    # Sort by variance (biggest overruns first)
+    details.sort(key=lambda x: x['variance'], reverse=True)
+    
+    total_variance = total_actual - total_budget
+    total_variance_percent = ((total_variance / total_budget) * 100) if total_budget > 0 else 0
+    
+    return jsonify({
+        'year': year,
+        'summary': {
+            'total_budget': round(total_budget, 2),
+            'total_actual': round(total_actual, 2),
+            'total_variance': round(total_variance, 2),
+            'total_variance_percent': round(total_variance_percent, 2),
+            'over_budget_count': len([d for d in details if d['status'] == 'over']),
+            'under_budget_count': len([d for d in details if d['status'] == 'under'])
         },
         'details': details
     })
