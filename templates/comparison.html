@@ -256,13 +256,16 @@
 
                     row.innerHTML = `
                         <td>${item.charge_name}</td>
-                        <td><span class="badge bg-secondary">${item.category}</span></td>
+                        <td><span class="badge bg-secondary category-badge" data-category="${item.category}" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="Loading...">${item.category}</span></td>
                         <td class="text-end">€${item.actual.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         <td class="text-end">€${item.budget.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         <td class="text-end ${varianceClass}">€${item.variance.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         <td class="text-end ${varianceClass} ${variancePctClass}">${item.variance_pct.toFixed(1)}%</td>
                     `;
                 });
+
+                // Initialize tooltips with dynamic content
+                initializeCategoryTooltips();
 
                 // Update summary
                 const variancePct = totalBudget > 0 ? ((totalVariance / totalBudget) * 100).toFixed(1) : 0;
@@ -377,6 +380,56 @@
         });
     }
 
+    function initializeCategoryTooltips() {
+        const year = document.getElementById('yearSelect').value;
+        const mode = document.getElementById('modeSelect').value;
+        
+        if (!year) return;
+        
+        // Get all category badges
+        const badges = document.querySelectorAll('.category-badge');
+        
+        badges.forEach(badge => {
+            const category = badge.getAttribute('data-category');
+            
+            // Fetch charges for this category
+            fetch(`/api/category-charges?year=${year}&category=${encodeURIComponent(category)}&mode=${mode}`)
+                .then(response => response.json())
+                .then(charges => {
+                    let tooltipContent = `<strong>${category} Charges:</strong><br>`;
+                    
+                    if (charges.length === 0) {
+                        tooltipContent += '<em>No charges found</em>';
+                    } else {
+                        charges.forEach(charge => {
+                            tooltipContent += `• ${charge.name}: €${charge.amount.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<br>`;
+                        });
+                    }
+                    
+                    // Update tooltip
+                    const tooltip = bootstrap.Tooltip.getInstance(badge);
+                    if (tooltip) {
+                        tooltip.dispose();
+                    }
+                    new bootstrap.Tooltip(badge, {
+                        html: true,
+                        title: tooltipContent
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading category charges:', error);
+                    const tooltip = bootstrap.Tooltip.getInstance(badge);
+                    if (tooltip) {
+                        tooltip.dispose();
+                    }
+                    new bootstrap.Tooltip(badge, {
+                        html: true,
+                        title: `<strong>${category}</strong><br><em>Error loading charges</em>`
+                    });
+                });
+        });
+    }
+
     function resetComparison() {
         document.getElementById('yearSelect').value = '';
         document.getElementById('categorySelect').value = '';
@@ -394,6 +447,14 @@
             varianceChart.destroy();
             varianceChart = null;
         }
+        
+        // Dispose all tooltips
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(element => {
+            const tooltip = bootstrap.Tooltip.getInstance(element);
+            if (tooltip) {
+                tooltip.dispose();
+            }
+        });
     }
 
     // Initialize with invoice mode on page load
