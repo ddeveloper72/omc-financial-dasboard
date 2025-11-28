@@ -383,21 +383,21 @@
     function initializeCategoryTooltips() {
         const year = document.getElementById('yearSelect').value;
         const mode = document.getElementById('modeSelect').value;
-        
+
         if (!year) return;
-        
+
         // Get all category badges
         const badges = document.querySelectorAll('.category-badge');
-        
+
         badges.forEach(badge => {
             const category = badge.getAttribute('data-category');
-            
+
             // Fetch charges for this category
             fetch(`/api/category-charges?year=${year}&category=${encodeURIComponent(category)}&mode=${mode}`)
                 .then(response => response.json())
                 .then(charges => {
                     let tooltipContent = `<strong>${category} Charges:</strong><br>`;
-                    
+
                     if (charges.length === 0) {
                         tooltipContent += '<em>No charges found</em>';
                     } else {
@@ -405,7 +405,7 @@
                             tooltipContent += `• ${charge.name}: €${charge.amount.toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<br>`;
                         });
                     }
-                    
+
                     // Update tooltip
                     const tooltip = bootstrap.Tooltip.getInstance(badge);
                     if (tooltip) {
@@ -447,7 +447,7 @@
             varianceChart.destroy();
             varianceChart = null;
         }
-        
+
         // Dispose all tooltips
         document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(element => {
             const tooltip = bootstrap.Tooltip.getInstance(element);
